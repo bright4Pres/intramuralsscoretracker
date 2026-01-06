@@ -80,6 +80,11 @@ class Main {
     async animate(team, pointsScored) {
         console.debug('update', team, pointsScored)
 
+        // Expand the scoring team's quadrant
+        const quadrant = $(`.points__quadrant--${team.name}`)
+        quadrant.classList.add('expanded')
+        quadrant.style.backgroundColor = team.colorAsHex
+
         // Set marquee text and shadow color
         const marqueeText = $('.marquee__text')
         const teamDisplayName = team.name.charAt(0).toUpperCase() + team.name.slice(1)
@@ -128,6 +133,10 @@ class Main {
         await new Promise((resolve) => {
             this.elements.marqueeText.addEventListener('animationend', resolve, { once: true })
         })
+
+        // Remove expansion and reset background
+        quadrant.classList.remove('expanded')
+        quadrant.style.backgroundColor = ''
 
         document.documentElement.classList.remove('goal', `goal--${team.name}`)
     }
