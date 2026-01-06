@@ -66,15 +66,41 @@ class Main {
                     this.lastScores[team.name] = newScore
                     this.animate(this.teamMap[team.name], pointsScored)
                 } else if (newScore !== oldScore) {
-                    // Score changed but didn't increase (reset)
+                    // Score changed but didn't increase (reset or decrease)
+                    this.animateScoreChange(team.name, oldScore, newScore)
                     this.teamMap[team.name].points = newScore
                     this.lastScores[team.name] = newScore
-                    this.elements.teams[team.name].textContent = newScore
                 }
             })
         } catch (error) {
             console.error('Error fetching scores:', error)
         }
+    }
+
+    animateScoreChange(teamName, fromScore, toScore) {
+        const element = this.elements.teams[teamName]
+        const duration = 1200 // milliseconds
+        const startTime = performance.now()
+        const difference = toScore - fromScore
+        
+        const updateScore = (currentTime) => {
+            const elapsed = currentTime - startTime
+            const progress = Math.min(elapsed / duration, 1)
+            
+            // Easing function for smooth animation
+            const easeOutQuad = progress * (2 - progress)
+            const currentScore = Math.round(fromScore + (difference * easeOutQuad))
+            
+            element.textContent = currentScore
+            
+            if (progress < 1) {
+                requestAnimationFrame(updateScore)
+            } else {
+                element.textContent = toScore
+            }
+        }
+        
+        requestAnimationFrame(updateScore)
     }
 
     async animate(team, pointsScored) {
@@ -126,8 +152,32 @@ class Main {
             document.documentElement.classList.add('win', `win--${team.name}`)
         }
 
+        // Animate the score counting up
+        const element = this.elements.teams[team.name]
+        const fromScore = team.points - pointsScored
+        const toScore = team.points
+        const duration = 800 // milliseconds
+        const startTime = performance.now()
+        
+        const updateScore = (currentTime) => {
+            const elapsed = currentTime - startTime
+            const progress = Math.min(elapsed / duration, 1)
+            
+            // Easing function for smooth animation
+            const easeOutQuad = progress * (2 - progress)
+            const currentScore = Math.round(fromScore + (pointsScored * easeOutQuad))
+            
+            element.textContent = currentScore
+            
+            if (progress < 1) {
+                requestAnimationFrame(updateScore)
+            } else {
+                element.textContent = toScore
+            }
+        }
+        
         setTimeout(() => {
-            this.elements.teams[team.name].textContent = team.points
+            requestAnimationFrame(updateScore)
         }, 150)
 
         await new Promise((resolve) => {
