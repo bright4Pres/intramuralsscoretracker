@@ -1,0 +1,339 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>admin</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .current-scores {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+        
+        .score-card {
+            padding: 20px;
+            border-radius: 8px;
+            color: white;
+            text-align: center;
+        }
+        
+        .score-card.shinobi { background-color: #DC2626; }
+        .score-card.pegasus { background-color: #FACC15; color: #333; }
+        .score-card.chimera { background-color: #1E1B4B; }
+        .score-card.phoenix { background-color: #F97316; }
+        
+        .score-card h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .score-card .points {
+            font-size: 36px;
+            font-weight: bold;
+        }
+        
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .form-section h2 {
+            color: #555;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+        
+        select, input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        select:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-add {
+            color: rgb(0, 0, 0);
+        }
+        
+        .btn-reset {
+            color: rgb(0, 0, 0);
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .link-section {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .link-section a {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .link-section a:hover {
+            text-decoration: underline;
+        }
+        
+        .logout-btn {
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background-color: #5a6268;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">        
+        <div class="current-scores" id="current-scores">
+            <div class="score-card shinobi">
+                <h3>Shinobi</h3>
+                <div class="points" data-team="shinobi">{{ teams.0.points|default:0 }}</div>
+            </div>
+            <div class="score-card pegasus">
+                <h3>Pegasus</h3>
+                <div class="points" data-team="pegasus">{{ teams.1.points|default:0 }}</div>
+            </div>
+            <div class="score-card chimera">
+                <h3>Chimera</h3>
+                <div class="points" data-team="chimera">{{ teams.2.points|default:0 }}</div>
+            </div>
+            <div class="score-card phoenix">
+                <h3>Phoenix</h3>
+                <div class="points" data-team="phoenix">{{ teams.3.points|default:0 }}</div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h2>Add Points</h2>
+            <form id="add-points-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="team">Select Team:</label>
+                    <select id="team" name="team" required>
+                        <option value="">-- Choose a team --</option>
+                        <option value="shinobi">Shinobi</option>
+                        <option value="pegasus">Pegasus</option>
+                        <option value="chimera">Chimera</option>
+                        <option value="phoenix">Phoenix</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="points">Points to Add:</label>
+                    <input type="number" id="points" name="points" min="1" max="100" value="1" required>
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn-add">Add Points</button>
+                    <button type="button" class="btn-reset" onclick="resetAllScores()">Reset All Scores</button>
+                </div>
+                
+                <div id="message" class="message"></div>
+            </form>
+        </div>
+        
+        <div class="link-section">
+            <a href="/admin-logout/" class="logout-btn">leave</a>
+        </div>
+    </div>
+    
+    <script>
+        // Fetch and update scores
+        function updateScores() {
+            fetch('/api/scores/')
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(team => {
+                        const element = document.querySelector(`[data-team="${team.name}"]`);
+                        if (element) {
+                            element.textContent = team.points;
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching scores:', error));
+        }
+        
+        // Add points form submission
+        document.getElementById('add-points-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const messageEl = document.getElementById('message');
+            
+            fetch('/api/add-points/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    messageEl.textContent = data.message;
+                    messageEl.className = 'message success';
+                    messageEl.style.display = 'block';
+                    updateScores();
+                    document.getElementById('points').value = 1;
+                } else {
+                    messageEl.textContent = data.message || 'Error adding points';
+                    messageEl.className = 'message error';
+                    messageEl.style.display = 'block';
+                }
+                
+                setTimeout(() => {
+                    messageEl.style.display = 'none';
+                }, 3000);
+            })
+            .catch(error => {
+                messageEl.textContent = 'Network error. Please try again.';
+                messageEl.className = 'message error';
+                messageEl.style.display = 'block';
+                console.error('Error:', error);
+            });
+        });
+        
+        // Reset all scores
+        function resetAllScores() {
+            if (!confirm('Are you sure you want to reset all scores to 0?')) {
+                return;
+            }
+            
+            const messageEl = document.getElementById('message');
+            
+            fetch('/api/reset-scores/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    messageEl.textContent = data.message;
+                    messageEl.className = 'message success';
+                    messageEl.style.display = 'block';
+                    updateScores();
+                } else {
+                    messageEl.textContent = 'Error resetting scores';
+                    messageEl.className = 'message error';
+                    messageEl.style.display = 'block';
+                }
+                
+                setTimeout(() => {
+                    messageEl.style.display = 'none';
+                }, 3000);
+            })
+            .catch(error => {
+                messageEl.textContent = 'Network error. Please try again.';
+                messageEl.className = 'message error';
+                messageEl.style.display = 'block';
+                console.error('Error:', error);
+            });
+        }
+        
+        // Update scores every 2 seconds
+        updateScores();
+        setInterval(updateScores, 2000);
+    </script>
+</body>
+</html>

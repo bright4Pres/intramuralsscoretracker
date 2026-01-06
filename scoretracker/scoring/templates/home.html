@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scoreboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+  <main>
+    <div class="marquee" hidden>
+        <span class="marquee__text"></span>
+    </div>
+    <div class="points">
+        <div class="points__quadrant points__quadrant--shinobi">
+            <span class="points__team points__team--shinobi">{{ teams.shinobi.points|default:0 }}</span>
+            <span class="points__label">Shinobi</span>
+        </div>
+        <div class="points__quadrant points__quadrant--pegasus">
+            <span class="points__team points__team--pegasus">{{ teams.pegasus.points|default:0 }}</span>
+            <span class="points__label">Pegasus</span>
+        </div>
+        <div class="points__quadrant points__quadrant--chimera">
+            <span class="points__team points__team--chimera">{{ teams.chimera.points|default:0 }}</span>
+            <span class="points__label">Chimera</span>
+        </div>
+        <div class="points__quadrant points__quadrant--phoenix">
+            <span class="points__team points__team--phoenix">{{ teams.phoenix.points|default:0 }}</span>
+            <span class="points__label">Phoenix</span>
+        </div>
+    </div>
+</main>
+
+<script id="serialized-team-map" type="application/json">
+    {
+        "shinobi": {
+            "name": "shinobi",
+            "points": 0,
+            "colorAsHex": "#DC2626"
+        },
+        "pegasus": {
+            "name": "pegasus",
+            "points": 0,
+            "colorAsHex": "#FACC15"
+        },
+        "chimera": {
+            "name": "chimera",
+            "points": 0,
+            "colorAsHex": "#1E1B4B"
+        },
+        "phoenix": {
+            "name": "phoenix",
+            "points": 0,
+            "colorAsHex": "#F97316"
+        }
+    }
+</script>
+    <script src='https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js'></script>
+    <script  src="{% static 'js/home.js' %}"></script>
+  </body>
+</html>
