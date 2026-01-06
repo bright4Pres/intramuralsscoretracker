@@ -444,7 +444,7 @@ main {
     
     .marquee {
         font-size: min(8vw, 8vh);
-        top: 10px;
+        top: 40px;
         padding: 15px;
     }
 }
@@ -488,7 +488,7 @@ main {
     
     .marquee {
         font-size: min(10vw, 6vh);
-        top: 5px;
+        top: 60px;
         padding: 10px;
     }
     
@@ -510,7 +510,7 @@ main {
     
     .marquee {
         font-size: min(12vw, 5vh);
-        top: 5px;
+        top: 80px;
         padding: 8px;
     }
 }
