@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from .models import Team
+from .models import Team, ScoreLog
 
 # Simple password - change this to whatever you want
 ADMIN_PASSWORD = "ZRC2026!intramsnibright"
@@ -52,22 +52,50 @@ def add_points(request):
     """API endpoint to add points to a team."""
     team_name = request.POST.get('team')
     points = request.POST.get('points')
+    opponent = request.POST.get('opponent', '').strip()
+    event = request.POST.get('event', '').strip()
+    team_score = request.POST.get('team_score', '0').strip()
+    opponent_score = request.POST.get('opponent_score', '0').strip()
+    reason = request.POST.get('reason', '').strip()
     
     if not team_name or not points:
         return JsonResponse({'success': False, 'message': 'missing team or points'}, status=400)
     
+    if not event:
+        return JsonResponse({'success': False, 'message': 'event name is required'}, status=400)
+    
     try:
         points = int(points)
-        if points < 1:
-            return JsonResponse({'success': False, 'message': 'points must be positive'}, status=400)
+        if points == 0:
+            return JsonResponse({'success': False, 'message': 'points cannot be zero'}, status=400)
+        
+        # Require reason for negative points
+        if points < 0 and not reason:
+            return JsonResponse({'success': False, 'message': 'reason is required for deductions'}, status=400)
+        
+        team_score_int = int(team_score) if team_score else 0
+        opponent_score_int = int(opponent_score) if opponent_score else 0
         
         team = Team.objects.get(name=team_name)
         team.points += points
         team.save()
         
+        # Create log entry
+        ScoreLog.objects.create(
+            team=team_name,
+            points=points,
+            opponent=opponent if opponent else None,
+            event=event,
+            team_score=team_score_int,
+            opponent_score=opponent_score_int if opponent else None,
+            reason=reason if reason else None
+        )
+        
+        action = "Deducted" if points < 0 else "Added"
+        abs_points = abs(points)
         return JsonResponse({
             'success': True,
-            'message': f'Added {points} points to {team.get_name_display()}!',
+            'message': f'{action} {abs_points} points {"from" if points < 0 else "to"} {team.get_name_display()}!',
             'team': team_name,
             'new_total': team.points
         })
@@ -78,6 +106,38 @@ def add_points(request):
 
 @require_http_methods(["POST"])
 def reset_scores(request):
-    """API endpoint to reset all team scores to 0."""
+    """API endpoint to reset all team scores to 0 and clear all logs."""
     Team.objects.all().update(points=0)
-    return JsonResponse({'success': True, 'message': 'All scores have been reset to 0'})
+    ScoreLog.objects.all().delete()
+    return JsonResponse({'success': True, 'message': 'All scores and logs have been reset'})
+
+
+def logs(request):
+    """Display the logs page with scoring history."""
+    return render(request, 'logs.html')
+
+
+@require_http_methods(["GET"])
+def get_logs(request):
+    """API endpoint to get all score logs."""
+    logs = ScoreLog.objects.all().values('id', 'team', 'points', 'opponent', 'event', 'team_score', 'opponent_score', 'reason', 'timestamp')
+    logs_list = []
+    
+    for log in logs:
+        # Get team display name
+        team_display = dict(Team.TEAM_CHOICES).get(log['team'], log['team'])
+        
+        logs_list.append({
+            'id': log['id'],
+            'team': log['team'],
+            'team_display': team_display,
+            'points': log['points'],
+            'opponent': log['opponent'] if log['opponent'] else 'All',
+            'event': log['event'],
+            'team_score': log['team_score'],
+            'opponent_score': log['opponent_score'],
+            'reason': log['reason'],
+            'timestamp': log['timestamp'].isoformat()
+        })
+    
+    return JsonResponse(logs_list, safe=False)

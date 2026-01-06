@@ -1,0 +1,386 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Score Logs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: #0a0a0a;
+            color: white;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            font-family: 'Black Ops One', cursive;
+            font-size: 36px;
+            letter-spacing: 2px;
+            background-color: darkcyan;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .back-btn {
+            background-color: #5b5b5b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .logs-table {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        th {
+            padding: 20px 15px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        tbody tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s;
+        }
+        
+        tbody tr:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+        
+        td {
+            padding: 18px 15px;
+        }
+        
+        .team-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .team-badge.shinobi {
+            background-color: rgba(220, 38, 38, 0.2);
+            color: #DC2626;
+            border: 1px solid rgba(220, 38, 38, 0.4);
+        }
+        
+        .team-badge.pegasus {
+            background-color: rgba(250, 204, 21, 0.2);
+            color: #FACC15;
+            border: 1px solid rgba(250, 204, 21, 0.4);
+        }
+        
+        .team-badge.chimera {
+            background-color: rgba(30, 27, 75, 0.4);
+            color: #8B7FDB;
+            border: 1px solid rgba(30, 27, 75, 0.6);
+        }
+        
+        .team-badge.phoenix {
+            background-color: rgba(249, 115, 22, 0.2);
+            color: #F97316;
+            border: 1px solid rgba(249, 115, 22, 0.4);
+        }
+        
+        .points-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #00782 8 0%, #005a1f 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .points-badge.deduction {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        }
+        
+        .reason-text {
+            color: rgba(255, 100, 100, 0.9);
+            font-size: 13px;
+            font-style: italic;
+            margin-top: 4px;
+            display: block;
+        }
+        
+        .event-cell {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .opponent-cell {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+        }
+        
+        .timestamp-cell {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 13px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+        
+        /* Tablet responsiveness */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .back-btn {
+                width: 100%;
+                text-align: center;
+            }
+            
+            table {
+                font-size: 14px;
+            }
+            
+            th, td {
+                padding: 12px 10px;
+            }
+            
+            th {
+                font-size: 11px;
+            }
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 640px) {
+            .logs-table {
+                overflow-x: auto;
+            }
+            
+            table {
+                min-width: 600px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            th, td {
+                padding: 10px 8px;
+                font-size: 12px;
+            }
+            
+            .team-badge, .points-badge {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Score Logs</h1>
+            <a href="/" class="back-btn">← Back to Scoreboard</a>
+        </div>
+        
+        <div class="logs-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Winner</th>
+                        <th>Points Earned</th>
+                        <th>Event</th>
+                        <th>Result</th>
+                        <th>Date & Time</th>
+                    </tr>
+                </thead>
+                <tbody id="logs-body">
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div>Loading logs...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        function formatTimestamp(isoString) {
+            const date = new Date(isoString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            // Format time
+            const timeStr = date.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+            
+            // Format date
+            const dateStr = date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+            });
+            
+            if (diffMins < 1) return `Just now`;
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays === 1) return `Yesterday, ${timeStr}`;
+            if (diffDays < 7) return `${diffDays}d ago, ${timeStr}`;
+            
+            return `${dateStr}, ${timeStr}`;
+        }
+        
+        function formatPlacement(place) {
+            if (place === 1) return 'First';
+            if (place === 2) return 'First Runner Up';
+            if (place === 3) return 'Second Runner Up';
+            if (place === 4) return 'Third Runner Up';
+            if (place > 4) return `${place}th Place`;
+            return '';
+        }
+        
+        function updateLogs() {
+            fetch('/api/logs/')
+                .then(response => response.json())
+                .then(logs => {
+                    const tbody = document.getElementById('logs-body');
+                    
+                    if (logs.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="5" class="empty-state">
+                                    <div>No score logs yet. Add some points from the admin dashboard!</div>
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    tbody.innerHTML = logs.map(log => {
+                        // Determine if deduction
+                        const isDeduction = log.points < 0;
+                        const badgeClass = isDeduction ? 'deduction' : '';
+                        const pointsDisplay = isDeduction ? log.points : `+${log.points}`;
+                        
+                        // Format the result string
+                        let resultText = '';
+                        if (isDeduction && log.reason) {
+                            // Deduction with reason
+                            resultText = `<span class="reason-text">${log.reason}</span>`;
+                        } else if (log.opponent && log.opponent !== 'All' && log.opponent_score !== null && log.opponent_score > 0) {
+                            // Versus event with scores
+                            resultText = `${log.team_display} won ${log.team_score}-${log.opponent_score} vs ${log.opponent}`;
+                        } else if (log.opponent && log.opponent !== 'All') {
+                            // Versus event without scores
+                            resultText = `vs ${log.opponent}`;
+                        } else if (log.team_score > 0) {
+                            // Competition event with placement
+                            resultText = formatPlacement(log.team_score);
+                        } else {
+                            // Competition event without placement
+                            resultText = 'vs All';
+                        }
+                        
+                        return `
+                            <tr>
+                                <td>
+                                    <span class="team-badge ${log.team}">${log.team_display}</span>
+                                </td>
+                                <td>
+                                    <span class="points-badge ${badgeClass}">${pointsDisplay}</span>
+                                </td>
+                                <td class="event-cell">${log.event}</td>
+                                <td class="opponent-cell">${resultText}</td>
+                                <td class="timestamp-cell">${formatTimestamp(log.timestamp)}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                })
+                .catch(error => {
+                    console.error('Error fetching logs:', error);
+                });
+        }
+        
+        // Initial load
+        updateLogs();
+        
+        // Update every 2 seconds for real-time updates
+        setInterval(updateLogs, 2000);
+    </script>
+</body>
+</html>
