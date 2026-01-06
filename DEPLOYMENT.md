@@ -1,43 +1,50 @@
-# PythonAnywhere Deployment Guide
+# PythonAnywhere Deployment Guide (from GitHub)
 
-## Files to Upload
+## Prerequisites
 
-1. Upload your entire `scoretracker` project folder
-2. Make sure these files are included:
-   - `requirements.txt`
-   - `db.sqlite3` (your database with team data)
-   - All Django files
+1. Your code is pushed to GitHub
+2. PythonAnywhere free account created
 
-## Step-by-Step Deployment
+## Quick Deploy Steps
 
-### 1. Create PythonAnywhere Account
-- Go to https://www.pythonanywhere.com
-- Sign up for a free account
-- Note your username (e.g., `yourname`)
+### 1. Open Bash Console
+Go to PythonAnywhere → **Consoles** tab → Start a new **Bash** console
 
-### 2. Upload Files
-Go to **Files** tab:
-```
-/home/yourname/scoretracker/
-```
-Upload all your project files there.
-
-### 3. Create Virtual Environment
-Open a **Bash console**:
+### 2. Clone Your Repository
 ```bash
 cd ~
-python3.10 -m venv myenv
-source myenv/bin/activate
-pip install -r scoretracker/requirements.txt
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+cd YOUR_REPO_NAME
 ```
 
-### 4. Configure Web App
+### 3. Create Virtual Environment
+```bash
+python3.10 -m venv myenv
+source myenv/bin/activate
+pip install -r requirements.txt
+```
+
+### 4. Setup Database
+```bash
+cd scoretracker
+python manage.py migrate
+python manage.py init_teams
+cd ~
+```
+
+### 5. Configure Web App
 Go to **Web** tab → "Add a new web app":
 - Choose "Manual configuration"
 - Python 3.10
 - Click Next
 
-### 5. Configure WSGI File
+### 6. Set Virtual Environment Path
+In the **Web** tab, under "Virtualenv" section:
+```
+/home/YOURUSERNAME/myenv
+```
+
+### 7. Configure WSGI File
 In the **Web** tab, click on the WSGI configuration file link.
 
 Replace everything with:
@@ -46,9 +53,9 @@ import os
 import sys
 
 # Add your project directory to the sys.path
-path = '/home/YOURUSERNAME/scoretracker/scoretracker'
+path = '/home/YOURUSERNAME/YOUR_REPO_NAME/scoretracker'
 if path not in sys.path:
-    sys.append(path)
+    sys.path.append(path)
 
 # Set environment variable for Django settings
 os.environ['DJANGO_SETTINGS_MODULE'] = 'scoretracker.settings'
@@ -63,43 +70,34 @@ from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 ```
 
-**Replace `YOURUSERNAME` with your actual PythonAnywhere username!**
+**Replace:**
+- `YOURUSERNAME` with your PythonAnywhere username
+- `YOUR_REPO_NAME` with your GitHub repo name
 
-### 6. Set Virtual Environment Path
-In the **Web** tab, under "Virtualenv":
-```
-/home/YOURUSERNAME/myenv
-```
-
-### 7. Configure Static Files
-In the **Web** tab, under "Static files":
+### 8. Configure Static Files
+In the **Web** tab, under "Static files" section, click "Enter URL" and add:
 - URL: `/static/`
-- Directory: `/home/YOURUSERNAME/scoretracker/scoretracker/static`
+- Directory: `/home/YOURUSERNAME/YOUR_REPO_NAME/scoretracker/static`
 
-### 8. Update Django Settings
-Edit `settings.py`:
-```python
-# Add your PythonAnywhere domain
-ALLOWED_HOSTS = ['YOURUSERNAME.pythonanywhere.com', 'localhost', '127.0.0.1']
-
-# Optional: Set DEBUG to False for production
-DEBUG = False  # Change to False after testing
-```
-
-### 9. Initialize Database
-In Bash console:
+### 9. Update Django Settings
+Edit `settings.py` in the bash console:
 ```bash
-cd ~/scoretracker/scoretracker
-source ~/myenv/bin/activate
-python manage.py migrate
-python manage.py init_teams
+cd ~/YOUR_REPO_NAME/scoretracker/scoretracker
+nano settings.py
 ```
+
+Find `ALLOWED_HOSTS` and update:
+```python
+ALLOWED_HOSTS = ['YOURUSERNAME.pythonanywhere.com', 'localhost', '127.0.0.1']
+```
+
+Press `Ctrl+X`, then `Y`, then `Enter` to save.
 
 ### 10. Reload Web App
 - Go back to **Web** tab
 - Click the big green **Reload** button
 
-## Your Site Will Be Live At:
+## Your Site Is Live! 🎉
 ```
 https://YOURUSERNAME.pythonanywhere.com
 ```
@@ -112,17 +110,31 @@ Password: ZRC2026!intramsnibright
 
 ## Updating Your Site Later
 
-When you make changes:
-1. Upload changed files via **Files** tab
-2. Click **Reload** button on **Web** tab
+When you push changes to GitHub:
+```bash
+cd ~/YOUR_REPO_NAME
+git pull
+source ~/myenv/bin/activate
+pip install -r requirements.txt  # if requirements changed
+cd scoretracker
+python manage.py migrate  # if models changed
+```
 
-## Troubleshooting
+Then click **Reload** on the Web tab.
 
-If something goes wrong:
-- Check the **Error log** in the Web tab
-- Check the **Server log** in the Web tab
-- Make sure all paths use your correct username
-- Make sure database file has correct permissions
+## Common Issues & Fixes
+
+### Issue: "No module named 'scoretracker'"
+Fix: Check the path in WSGI file matches your repo name
+
+### Issue: Static files not loading
+Fix: Double-check static files path in Web tab
+
+### Issue: Database missing teams
+Fix: Run `python manage.py init_teams` in bash console
+
+### Issue: "DisallowedHost" error
+Fix: Add your domain to ALLOWED_HOSTS in settings.py
 
 ## Free Tier Limits
 - Renew every 3 months (they'll email you)
