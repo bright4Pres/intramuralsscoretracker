@@ -66,8 +66,6 @@ def add_points(request):
     
     try:
         points = int(points)
-        if points == 0:
-            return JsonResponse({'success': False, 'message': 'points cannot be zero'}, status=400)
         
         # Require reason for negative points
         if points < 0 and not reason:
@@ -77,8 +75,10 @@ def add_points(request):
         opponent_score_int = int(opponent_score) if opponent_score else 0
         
         team = Team.objects.get(name=team_name)
-        team.points += points
-        team.save()
+        # Only update points if non-zero
+        if points != 0:
+            team.points += points
+            team.save()
         
         # Create log entry
         ScoreLog.objects.create(
