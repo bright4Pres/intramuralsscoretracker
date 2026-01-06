@@ -91,6 +91,15 @@ def add_points(request):
             reason=reason if reason else None
         )
         
+        # Special message for 0 points (logging only)
+        if points == 0:
+            return JsonResponse({
+                'success': True,
+                'message': f'Logged match result for {team.get_name_display()}!',
+                'team': team_name,
+                'new_total': team.points
+            })
+        
         action = "Deducted" if points < 0 else "Added"
         abs_points = abs(points)
         return JsonResponse({
