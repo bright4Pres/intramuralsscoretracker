@@ -40,7 +40,6 @@ class Command(BaseCommand):
         
         # LITMUS - Major Events
         litmus_major = [
-            'Major',
             'Neo-Ethnic Dance',
             'Saludo',
             'Speech Choir',
