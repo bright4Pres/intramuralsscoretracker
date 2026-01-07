@@ -576,7 +576,7 @@
                 {% for game in sports_games %}
                     {% if game.category == 'major' %}
                     <div class="game-row" data-game-id="{{ game.id }}">
-                        <div class="game-name" data-icon="{% if 'Volleyball' in game.name %}🏐{% elif 'Basketball' in game.name %}🏀{% elif 'Sepak' in game.name %}🥎{% elif 'Football' in game.name or 'Soccer' in game.name %}⚽{% elif 'Swimming' in game.name %}🏊{% else %}🏆{% endif %}">
+                        <div class="game-name">
                             {{ game.name }}
                             <div class="game-info">{{ game.points_1st }}/{{ game.points_2nd }}/{{ game.points_3rd }}/{{ game.points_4th }} pts</div>
                         </div>
@@ -602,11 +602,11 @@
                     {% endif %}
                 {% endfor %}
                 
-                <h3 class="category-title">Minor Sports</h3>
-                {% for game in sports_games %}
-                    {% if game.category == 'minor' %}
-                    <div class="game-row" data-game-id="{{ game.id }}">
-                        <div class="game-name" data-icon="{% if 'Pickleball' in game.name %}🎾{% elif 'Badminton' in game.name %}🏸{% elif 'Basketball' in game.name %}🏀{% elif 'Tabletennis' in game.name or 'Table' in game.name %}🏓{% elif 'Chess' in game.name %}♟️{% elif 'Track' in game.name or 'Dash' in game.name %}🏃{% else %}🏅{% endif %}">
+                    <h3 class="category-title">Minor Sports</h3>
+                    {% for game in sports_games %}
+                        {% if game.category == 'minor' %}
+                        <div class="game-row" data-game-id="{{ game.id }}">
+                            <div class="game-name">
                             {{ game.name }}
                             <div class="game-info">{{ game.points_1st }}/{{ game.points_2nd }}/{{ game.points_3rd }}/{{ game.points_4th }} pts</div>
                         </div>
@@ -640,7 +640,7 @@
                 <h3 class="category-title">Esports</h3>
                 {% for game in esports_games %}
                 <div class="game-row" data-game-id="{{ game.id }}">
-                    <div class="game-name" data-icon="🎮">
+                    <div class="game-name">
                         {{ game.name }}
                         <div class="game-info">{{ game.points_1st }}/{{ game.points_2nd }}/{{ game.points_3rd }}/{{ game.points_4th }} pts</div>
                     </div>
@@ -674,7 +674,7 @@
                 {% for game in litmus_games %}
                     {% if game.category == 'major' %}
                     <div class="game-row" data-game-id="{{ game.id }}">
-                        <div class="game-name" data-icon="{% if 'Dance' in game.name %}💃{% elif 'Singing' in game.name or 'Vocal' in game.name %}🎤{% elif 'Band' in game.name %}🎸{% elif 'Film' in game.name %}🎬{% elif 'Art' in game.name %}🎨{% else %}🎭{% endif %}">
+                        <div class="game-name">
                             {{ game.name }}
                             <div class="game-info">{{ game.points_1st }}/{{ game.points_2nd }}/{{ game.points_3rd }}/{{ game.points_4th }} pts
                             {% if game.notes %} | {{ game.notes }}{% endif %}</div>
@@ -705,7 +705,7 @@
                 {% for game in litmus_games %}
                     {% if game.category == 'minor' %}
                     <div class="game-row" data-game-id="{{ game.id }}">
-                        <div class="game-name" data-icon="{% if 'Speech' in game.name %}🗣️{% elif 'Debate' in game.name %}💬{% elif 'Quiz' in game.name %}📝{% elif 'Photo' in game.name %}📷{% else %}🎪{% endif %}">
+                        <div class="game-name">
                             {{ game.name }}
                             <div class="game-info">{{ game.points_1st }}/{{ game.points_2nd }}/{{ game.points_3rd }}/{{ game.points_4th }} pts</div>
                         </div>
@@ -738,7 +738,7 @@
             <div class="leaderboard-section">
                 {% for game in mr_miss_pisay %}
                 <div class="game-row" data-game-id="{{ game.id }}">
-                    <div class="game-name" data-icon="👑">
+                    <div class="game-name">
                         {{ game.name }}
                         <div class="game-info">{{ game.points_1st }}/{{ game.points_2nd }}/{{ game.points_3rd }}/{{ game.points_4th }} pts
                         {% if game.notes %} | {{ game.notes }}{% endif %}</div>
@@ -771,7 +771,7 @@
             <div class="leaderboard-section">
                 {% for game in minigames %}
                 <div class="game-row" data-game-id="{{ game.id }}">
-                    <div class="game-name" data-icon="🎯">
+                    <div class="game-name">
                         {{ game.name }}
                         <div class="game-info">{{ game.points_1st }}/{{ game.points_2nd }}/{{ game.points_3rd }}/{{ game.points_4th }} pts</div>
                     </div>
