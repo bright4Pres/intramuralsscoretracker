@@ -205,7 +205,10 @@ def leaderboard(request):
     teams = Team.objects.all().order_by('name')
     
     # Get all active games organized by type and category
-    sports_games = Game.objects.filter(type='sports', is_active=True).order_by('category', 'name')
+    # Exclude esports games from sports
+    esports_names = ['Mobile Legends', 'Call of Duty Mobile', 'Valorant']
+    sports_games = Game.objects.filter(type='sports', is_active=True).exclude(name__in=esports_names).order_by('category', 'name')
+    esports_games = Game.objects.filter(type='sports', name__in=esports_names, is_active=True).order_by('name')
     litmus_games = Game.objects.filter(type='litmus', is_active=True).exclude(name__icontains='mr. and ms. pisay').order_by('category', 'name')
     mr_miss_pisay = Game.objects.filter(type='litmus', name__icontains='mr. and ms. pisay', is_active=True)
     minigames = Game.objects.filter(type='minigame', is_active=True).order_by('name')
@@ -213,6 +216,7 @@ def leaderboard(request):
     return render(request, 'leaderboard.html', {
         'teams': teams,
         'sports_games': sports_games,
+        'esports_games': esports_games,
         'litmus_games': litmus_games,
         'mr_miss_pisay': mr_miss_pisay,
         'minigames': minigames,
