@@ -130,7 +130,10 @@ class Command(BaseCommand):
             'Call of Duty Mobile',
             'Valorant',
             'Chess',
-            'Track and Field Dash',
+            "Track and Field 100m Women's",
+            "Track and Field 100m Men's",
+            "Track and Field 400m Women's",
+            "Track and Field 400m Men's",
         ]
         
         for game in sports_minor:
@@ -143,6 +146,24 @@ class Command(BaseCommand):
                 'points_3rd': 9,
                 'points_4th': 6,
                 'points_dq': 3,
+            })
+        
+        # Track and Field Relays - Major Sports
+        track_relays = [
+            "Track and Field Relay Women's",
+            "Track and Field Relay Men's",
+        ]
+        
+        for game in track_relays:
+            games_data.append({
+                'name': game,
+                'category': 'major',
+                'type': 'sports',
+                'points_1st': 20,
+                'points_2nd': 16,
+                'points_3rd': 12,
+                'points_4th': 8,
+                'points_dq': 5,
             })
         
         # Create or update games
