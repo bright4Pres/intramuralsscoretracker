@@ -55,7 +55,11 @@ class Main {
             const response = await fetch('/api/scores/')
             const teams = await response.json()
             
-            teams.forEach(team => {
+            // Sort teams by points (highest to lowest)
+            const sortedTeams = teams.sort((a, b) => b.points - a.points)
+            
+            // Process all teams in parallel with their own animations
+            sortedTeams.forEach(team => {
                 const oldScore = this.lastScores[team.name]
                 const newScore = team.points
                 
@@ -64,7 +68,7 @@ class Main {
                     const pointsScored = newScore - oldScore
                     this.teamMap[team.name].points = newScore
                     this.lastScores[team.name] = newScore
-                    this.animate(this.teamMap[team.name], pointsScored)
+                    this.animateIndependent(this.teamMap[team.name], pointsScored)
                 } else if (newScore !== oldScore) {
                     // Score changed but didn't increase (reset or decrease)
                     this.animateScoreChange(team.name, oldScore, newScore)
@@ -101,6 +105,66 @@ class Main {
         }
         
         requestAnimationFrame(updateScore)
+    }
+
+    animateIndependent(team, pointsScored) {
+        console.debug('update', team, pointsScored)
+
+        // Get the score element
+        const element = this.elements.teams[team.name]
+        const fromScore = team.points - pointsScored
+        const toScore = team.points
+        
+        // Save the original score
+        const originalScore = element.textContent
+        
+        // Show the scored message
+        const teamDisplayName = team.name.charAt(0).toUpperCase() + team.name.slice(1)
+        element.textContent = `SCORED ${pointsScored}`
+        
+        // Add goal class for animation
+        const quadrant = $(`.points__quadrant--${team.name}`)
+        quadrant.classList.add('goal', `goal--${team.name}`)
+        
+        // Small confetti burst from the quadrant
+        const rect = quadrant.getBoundingClientRect()
+        const x = (rect.left + rect.width / 2) / window.innerWidth
+        const y = (rect.top + rect.height / 2) / window.innerHeight
+        
+        confetti({
+            particleCount: 30,
+            spread: 60,
+            origin: { x, y },
+            colors: ['#FFFFFF', team.colorAsHex, team.colorAsHex],
+            scalar: 1.2,
+            startVelocity: 25
+        })
+        
+        // After 1.5 seconds, animate counting to the actual score
+        setTimeout(() => {
+            quadrant.classList.remove('goal', `goal--${team.name}`)
+            
+            const duration = 800
+            const startTime = performance.now()
+            
+            const updateScore = (currentTime) => {
+                const elapsed = currentTime - startTime
+                const progress = Math.min(elapsed / duration, 1)
+                
+                const easeOutQuad = progress * (2 - progress)
+                const currentScore = Math.round(fromScore + (pointsScored * easeOutQuad))
+                
+                    element.textContent = currentScore
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateScore)
+                } else {
+                    element.textContent = toScore
+                }
+            }
+            
+            requestAnimationFrame(updateScore)
+        }, 1500)
     }
 
     async animate(team, pointsScored) {

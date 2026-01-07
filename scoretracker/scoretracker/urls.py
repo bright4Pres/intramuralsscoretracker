@@ -20,6 +20,7 @@ from scoring import views
 
 urlpatterns = [
     path('', views.home, name='home'),
+    path('leaderboard/', views.leaderboard, name='leaderboard'),
     path('logs/', views.logs, name='logs'),
     path('admin-login/', views.admin_login, name='admin_login'),
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
@@ -27,6 +28,9 @@ urlpatterns = [
     path('api/scores/', views.get_scores, name='get_scores'),
     path('api/logs/', views.get_logs, name='get_logs'),
     path('api/add-points/', views.add_points, name='add_points'),
+    path('api/add-game-result/', views.add_game_result, name='add_game_result'),
     path('api/reset-scores/', views.reset_scores, name='reset_scores'),
+    path('api/game-results/', views.get_game_results, name='get_game_results'),
+    path('api/set-game-result/', views.set_game_result, name='set_game_result'),
     path('admin/', admin.site.urls),
 ]

@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from .models import Team, ScoreLog
+from .models import Team, ScoreLog, Game, GameResult
+from django.db.models import Q
 
 # Simple password - change this to whatever you want
 ADMIN_PASSWORD = "ZRC2026!intramsnibright"
@@ -34,7 +35,24 @@ def admin_dashboard(request):
         return redirect('admin_login')
     
     teams = Team.objects.all().order_by('name')
-    return render(request, 'admin_dashboard.html', {'teams': teams})
+    
+    # Get all active games organized by type and category
+    all_games = Game.objects.filter(is_active=True).order_by('type', 'category', 'name')
+    sports_games = Game.objects.filter(type='sports', is_active=True).order_by('category', 'name')
+    litmus_games = Game.objects.filter(type='litmus', is_active=True).order_by('category', 'name')
+    minigames = Game.objects.filter(type='minigame', is_active=True).order_by('name')
+    
+    # Get all game results
+    game_results = GameResult.objects.all().select_related('game')
+    
+    return render(request, 'admin_dashboard.html', {
+        'teams': teams,
+        'all_games': all_games,
+        'sports_games': sports_games,
+        'litmus_games': litmus_games,
+        'minigames': minigames,
+        'game_results': game_results,
+    })
 
 def admin_logout(request):
     """Logout from admin dashboard."""
@@ -46,6 +64,67 @@ def get_scores(request):
     """API endpoint to get current scores for all teams."""
     teams = Team.objects.all().values('name', 'points', 'color')
     return JsonResponse(list(teams), safe=False)
+
+@require_http_methods(["POST"])
+def add_game_result(request):
+    """API endpoint to add a game result with automatic point calculation."""
+    team_name = request.POST.get('team')
+    game_id = request.POST.get('game_id')
+    placement = request.POST.get('placement')
+    
+    if not team_name or not game_id or not placement:
+        return JsonResponse({'success': False, 'message': 'Missing required fields'}, status=400)
+    
+    try:
+        game = Game.objects.get(id=game_id)
+        placement_int = int(placement)
+        
+        # Calculate points based on placement
+        points_map = {
+            1: game.points_1st,
+            2: game.points_2nd,
+            3: game.points_3rd,
+            4: game.points_4th,
+            5: game.points_dq,
+        }
+        points = points_map.get(placement_int, 0)
+        
+        # Update or create game result
+        game_result, created = GameResult.objects.update_or_create(
+            game=game,
+            team=team_name,
+            defaults={'placement': placement_int}
+        )
+        
+        # Update team points
+        team = Team.objects.get(name=team_name)
+        team.points += points
+        team.save()
+        
+        # Create log entry
+        placement_names = {1: '1st', 2: '2nd', 3: '3rd', 4: '4th', 5: 'DQ'}
+        ScoreLog.objects.create(
+            team=team_name,
+            points=points,
+            opponent='All',
+            event=game.name,
+            team_score=placement_int,
+            reason=f"Placement: {placement_names.get(placement_int, placement_int)}"
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Added {points} points to {team.get_name_display()} for {placement_names.get(placement_int)} place in {game.name}!',
+            'team': team_name,
+            'new_total': team.points
+        })
+    except Game.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Game not found'}, status=404)
+    except Team.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Team not found'}, status=404)
+    except ValueError:
+        return JsonResponse({'success': False, 'message': 'Invalid placement value'}, status=400)
+
 
 @require_http_methods(["POST"])
 def add_points(request):
@@ -121,6 +200,23 @@ def reset_scores(request):
     return JsonResponse({'success': True, 'message': 'All scores and logs have been reset'})
 
 
+def leaderboard(request):
+    """Display the public leaderboard page with game results."""
+    teams = Team.objects.all().order_by('name')
+    
+    # Get all active games organized by type and category
+    sports_games = Game.objects.filter(type='sports', is_active=True).order_by('category', 'name')
+    litmus_games = Game.objects.filter(type='litmus', is_active=True).order_by('category', 'name')
+    minigames = Game.objects.filter(type='minigame', is_active=True).order_by('name')
+    
+    return render(request, 'leaderboard.html', {
+        'teams': teams,
+        'sports_games': sports_games,
+        'litmus_games': litmus_games,
+        'minigames': minigames,
+    })
+
+
 def logs(request):
     """Display the logs page with scoring history."""
     return render(request, 'logs.html')
@@ -150,3 +246,53 @@ def get_logs(request):
         })
     
     return JsonResponse(logs_list, safe=False)
+
+
+@require_http_methods(["POST"])
+def set_game_result(request):
+    """API endpoint to set game results/placements."""
+    game_id = request.POST.get('game_id')
+    placements = request.POST.get('placements')  # JSON string: {"team_name": placement}
+    
+    if not game_id or not placements:
+        return JsonResponse({'success': False, 'message': 'Missing game_id or placements'}, status=400)
+    
+    try:
+        import json
+        placements_dict = json.loads(placements)
+        game = Game.objects.get(id=game_id)
+        
+        # Clear existing results for this game
+        GameResult.objects.filter(game=game).delete()
+        
+        # Create new results
+        for team_name, placement in placements_dict.items():
+            if placement and int(placement) > 0:
+                GameResult.objects.create(
+                    game=game,
+                    team=team_name,
+                    placement=int(placement)
+                )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Updated results for {game.name}'
+        })
+    except Game.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Game not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=400)
+
+
+@require_http_methods(["GET"])
+def get_game_results(request):
+    """API endpoint to get all game results."""
+    results = GameResult.objects.all().select_related('game')
+    results_data = {}
+    
+    for result in results:
+        if result.game.id not in results_data:
+            results_data[result.game.id] = {}
+        results_data[result.game.id][result.team] = result.placement
+    
+    return JsonResponse(results_data, safe=False)

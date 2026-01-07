@@ -233,12 +233,28 @@ main {
     animation-fill-mode: both;
     animation-iteration-count: 1;
     animation-timing-function: linear;
-    font-size: min(20vw, 30vh);
+    font-size: clamp(1.8rem, 15vw, 10rem);
     text-shadow: 0 0 32px rgb(0 0 0), 0 0 96px rgb(0 0 0);
     transition-delay: 150ms;
     transition-duration: 50ms;
-    transition-property: color, text-shadow;
+    transition-property: color, text-shadow, font-size;
     z-index: 300;
+    width: 100%;
+    max-width: 450px;
+    min-width: 200px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    text-overflow: clip;
+    white-space: nowrap;
+}
+
+/* Smaller font size when showing "SCORED X" message */
+.goal .points__team {
+    font-size: clamp(0.6rem, 2.8vw, 2rem);
+    white-space: normal;
+    word-wrap: break-word;
+    line-height: 1.2;
 }
 
 .points__versus {
@@ -262,6 +278,43 @@ main {
 
 .goal--phoenix {
     --color-score: var(--color-team-phoenix);
+}
+
+/* Pulsing glow effect when team scores */
+.points__quadrant.goal--shinobi {
+    animation: glow-shinobi 0.5s ease-in-out 3;
+}
+
+.points__quadrant.goal--pegasus {
+    animation: glow-pegasus 0.5s ease-in-out 3;
+}
+
+.points__quadrant.goal--chimera {
+    animation: glow-chimera 0.5s ease-in-out 3;
+}
+
+.points__quadrant.goal--phoenix {
+    animation: glow-phoenix 0.5s ease-in-out 3;
+}
+
+@keyframes glow-shinobi {
+    0%, 100% { box-shadow: inset 0 0 0 rgba(220, 38, 38, 0); }
+    50% { box-shadow: inset 0 0 60px rgba(220, 38, 38, 0.6); }
+}
+
+@keyframes glow-pegasus {
+    0%, 100% { box-shadow: inset 0 0 0 rgba(250, 204, 21, 0); }
+    50% { box-shadow: inset 0 0 60px rgba(250, 204, 21, 0.6); }
+}
+
+@keyframes glow-chimera {
+    0%, 100% { box-shadow: inset 0 0 0 rgba(30, 27, 75, 0); }
+    50% { box-shadow: inset 0 0 60px rgba(30, 27, 75, 0.8); }
+}
+
+@keyframes glow-phoenix {
+    0%, 100% { box-shadow: inset 0 0 0 rgba(249, 115, 22, 0); }
+    50% { box-shadow: inset 0 0 60px rgba(249, 115, 22, 0.6); }
 }
 
 .points__team--shinobi {
@@ -434,7 +487,13 @@ main {
     }
     
     .points__team {
-        font-size: min(25vw, 25vh);
+        font-size: clamp(1.5rem, 14vw, 9rem);
+        max-width: 350px;
+        min-width: 150px;
+    }
+    
+    .goal .points__team {
+        font-size: clamp(0.55rem, 2.5vw, 1.8rem);
     }
     
     .points__label {
@@ -477,7 +536,13 @@ main {
     }
     
     .points__team {
-        font-size: min(28vw, 20vh);
+        font-size: clamp(1.3rem, 13vw, 7rem);
+        max-width: 300px;
+        min-width: 120px;
+    }
+    
+    .goal .points__team {
+        font-size: clamp(0.5rem, 2.2vw, 1.5rem);
     }
     
     .points__label {
@@ -500,7 +565,13 @@ main {
 /* Small mobile devices */
 @media (max-width: 480px) {
     .points__team {
-        font-size: min(30vw, 18vh);
+        font-size: clamp(1rem, 11vw, 6rem);
+        max-width: 250px;
+        min-width: 100px;
+    }
+    
+    .goal .points__team {
+        font-size: clamp(0.45rem, 2vw, 1.3rem);
     }
     
     .points__label {
@@ -523,7 +594,13 @@ main {
     }
     
     .points__team {
-        font-size: min(15vw, 35vh);
+        font-size: clamp(1.3rem, 10vw, 7rem);
+        max-width: 300px;
+        min-width: 100px;
+    }
+    
+    .goal .points__team {
+        font-size: clamp(0.5rem, 2.2vw, 1.5rem);
     }
     
     .points__label {

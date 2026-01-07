@@ -1,0 +1,670 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Leaderboards</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Black Ops One', cursive;
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+            background: #0d0d0d;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,0,0,.3) 2px,
+                rgba(0,0,0,.3) 4px
+            );
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0;
+            position: relative;
+            z-index: 2;
+        }
+        
+        h1 {
+            color: #fff;
+            margin: 0;
+            padding: 25px 20px;
+            text-align: left;
+            font-size: 2.2em;
+            text-transform: uppercase;
+            background: #1a1a1a;
+            border-bottom: 4px solid #ff3333;
+            letter-spacing: 4px;
+            position: relative;
+        }
+        
+        h1::before {
+            content: '▶';
+            color: #ff3333;
+            margin-right: 15px;
+        }
+        
+        /* Current Scores */
+        .current-scores {
+            display: flex;
+            background: #1a1a1a;
+            padding: 15px;
+            gap: 0;
+            margin-bottom: 0;
+            border-bottom: 3px solid #333;
+        }
+        
+        .score-card {
+            flex: 1;
+            padding: 18px 15px;
+            color: white;
+            text-align: center;
+            position: relative;
+            border-right: 2px solid #0d0d0d;
+        }
+        
+        .score-card:last-child {
+            border-right: none;
+        }
+        
+        .score-card.shinobi { 
+            background: #DC2626;
+        }
+        .score-card.pegasus { 
+            background: #FACC15;
+            color: #000;
+        }
+        .score-card.chimera { 
+            background: #1E1B4B;
+        }
+        .score-card.phoenix { 
+            background: #F97316;
+        }
+        
+        .score-card h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .score-card .points {
+            font-size: 36px;
+            font-weight: bold;
+            min-width: 80px;
+            max-width: 120px;
+            margin: 0 auto;
+            font-variant-numeric: tabular-nums;
+            text-align: center;
+        }
+        
+        /* Tab System */
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 0;
+            background: #222;
+            padding: 0;
+        }
+        
+        .tab {
+            padding: 18px 35px;
+            background: #2a2a2a;
+            border: none;
+            border-right: 2px solid #0d0d0d;
+            cursor: pointer;
+            font-size: 15px;
+            color: #777;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'Black Ops One', cursive;
+        }
+        
+        .tab:hover {
+            color: #fff;
+            background: #333;
+        }
+        
+        .tab.active {
+            color: #fff;
+            background: #ff3333;
+            position: relative;
+        }
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #fff;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Leaderboard Section */
+        .leaderboard-section {
+            margin-bottom: 30px;
+        }
+        
+        .category-title {
+            font-size: 20px;
+            color: #fff;
+            margin: 0;
+            padding: 12px 20px;
+            background: #1a1a1a;
+            border-left: 6px solid #ff3333;
+            border-bottom: 1px solid #333;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+        
+        .game-row {
+            display: flex;
+            align-items: center;
+            padding: 18px 20px;
+            margin: 0;
+            background: #1a1a1a;
+            border-bottom: 1px solid #2a2a2a;
+            transition: background 0.2s;
+        }
+        
+        .game-row:hover {
+            background: #222;
+        }
+        
+        .game-name {
+            flex: 1;
+            color: #fff;
+            min-width: 250px;
+            font-size: 35px;
+        }
+        
+        .game-info {
+            font-size: 15px;
+            color: #666;
+            margin-top: 5px;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+        }
+        
+        .placements {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex: 2;
+            justify-content: flex-end;
+        }
+        
+        .placement-slot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .placement-label {
+            font-size: 10px;
+            font-weight: bold;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        
+        .placement-label.first { 
+            color: #FFD700;
+        }
+        .placement-label.second { 
+            color: #C0C0C0;
+        }
+        .placement-label.third { 
+            color: #CD7F32;
+        }
+        
+        .team-logo {
+            width: 55px;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: white;
+            border: 3px solid #0d0d0d;
+            transition: transform 0.1s;
+        }
+        
+        .team-logo:not(.empty):hover {
+            transform: scale(1.05);
+        }
+        
+        .team-logo.first {
+            border-color: #FFD700;
+            box-shadow: inset 0 0 0 2px #0d0d0d;
+        }
+        
+        .team-logo.second {
+            border-color: #C0C0C0;
+            box-shadow: inset 0 0 0 2px #0d0d0d;
+        }
+        
+        .team-logo.third {
+            border-color: #CD7F32;
+            box-shadow: inset 0 0 0 2px #0d0d0d;
+        }
+        
+        .team-logo.shinobi { background-color: #DC2626; }
+        .team-logo.pegasus { background-color: #FACC15; color: #333; }
+        .team-logo.chimera { background-color: #1E1B4B; }
+        .team-logo.phoenix { background-color: #F97316; }
+        
+        .team-logo.empty {
+            background: #2a2a2a;
+            color: #444;
+            border: 2px solid #333;
+            font-size: 11px;
+        }
+        
+        /* Link Section */
+        .link-section {
+            text-align: center;
+            margin-top: 0;
+            padding: 25px 20px;
+            background: #1a1a1a;
+            border-top: 3px solid #333;
+        }
+        
+        .link-section a {
+            color: #fff;
+            background: #2a2a2a;
+            border: 2px solid #444;
+            padding: 12px 24px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: inline-block;
+            margin: 0 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'Black Ops One', cursive;
+        }
+        
+        .link-section a:hover {
+            background: #ff3333;
+            border-color: #ff3333;
+            color: #fff;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .score-card .points {
+                font-size: 32px;
+                min-width: 75px;
+                max-width: 110px;
+            }
+            
+            .placements {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .team-logo {
+                width: 50px;
+                height: 50px;
+                font-size: 14px;
+            }
+            
+            .game-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .game-name {
+                margin-bottom: 10px;
+                width: 100%;
+            }
+            
+            .placements {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .current-scores {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .score-card {
+                padding: 15px;
+            }
+            
+            .score-card .points {
+                font-size: 28px;
+                min-width: 70px;
+                max-width: 100px;
+            }
+            
+            .team-logo {
+                width: 45px;
+                height: 45px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GAME LEADERBOARDS</h1>
+        
+        <!-- Current Scores -->
+        <div class="current-scores" id="current-scores">
+            {% for team in teams %}
+            <div class="score-card {{ team.name }}">
+                <h3>{{ team.get_name_display }}</h3>
+                <div class="points" data-team="{{ team.name }}">{{ team.points }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab active" data-tab="sports">Sports</button>
+            <button class="tab" data-tab="litmus">LITMUS</button>
+            <button class="tab" data-tab="minigames">Minigames</button>
+        </div>
+        
+        <!-- Sports Tab -->
+        <div class="tab-content active" id="sports-content">
+            <div class="leaderboard-section">
+                <h3 class="category-title">Major Sports</h3>
+                {% for game in sports_games %}
+                    {% if game.category == 'major' %}
+                    <div class="game-row" data-game-id="{{ game.id }}">
+                        <div class="game-name">
+                            {{ game.name }}
+                            <div class="game-info">{{ game.points_1st }}/{{ game.points_2nd }}/{{ game.points_3rd }}/{{ game.points_4th }} pts</div>
+                        </div>
+                        <div class="placements">
+                            <div class="placement-slot">
+                                <span class="placement-label first">1st</span>
+                                <div class="team-logo empty first" data-placement="1">TBD</div>
+                            </div>
+                            <div class="placement-slot">
+                                <span class="placement-label second">2nd</span>
+                                <div class="team-logo empty second" data-placement="2">TBD</div>
+                            </div>
+                            <div class="placement-slot">
+                                <span class="placement-label third">3rd</span>
+                                <div class="team-logo empty third" data-placement="3">TBD</div>
+                            </div>
+                            <div class="placement-slot">
+                                <span class="placement-label">4th</span>
+                                <div class="team-logo empty" data-placement="4">TBD</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                
+                <h3 class="category-title">Minor Sports</h3>
+                {% for game in sports_games %}
+                    {% if game.category == 'minor' %}
+                    <div class="game-row" data-game-id="{{ game.id }}">
+                        <div class="game-name">
+                            {{ game.name }}
+                            <div class="game-info">{{ game.points_1st }}/{{ game.points_2nd }}/{{ game.points_3rd }}/{{ game.points_4th }} pts</div>
+                        </div>
+                        <div class="placements">
+                            <div class="placement-slot">
+                                <span class="placement-label first">1st</span>
+                                <div class="team-logo empty first" data-placement="1">TBD</div>
+                            </div>
+                            <div class="placement-slot">
+                                <span class="placement-label second">2nd</span>
+                                <div class="team-logo empty second" data-placement="2">TBD</div>
+                            </div>
+                            <div class="placement-slot">
+                                <span class="placement-label third">3rd</span>
+                                <div class="team-logo empty third" data-placement="3">TBD</div>
+                            </div>
+                            <div class="placement-slot">
+                                <span class="placement-label">4th</span>
+                                <div class="team-logo empty" data-placement="4">TBD</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- LITMUS Tab -->
+        <div class="tab-content" id="litmus-content">
+            <div class="leaderboard-section">
+                <h3 class="category-title">Major LITMUS</h3>
+                {% for game in litmus_games %}
+                    {% if game.category == 'major' %}
+                    <div class="game-row" data-game-id="{{ game.id }}">
+                        <div class="game-name">
+                            {{ game.name }}
+                            <div class="game-info">{{ game.points_1st }}/{{ game.points_2nd }}/{{ game.points_3rd }}/{{ game.points_4th }} pts
+                            {% if game.notes %} | {{ game.notes }}{% endif %}</div>
+                        </div>
+                        <div class="placements">
+                            <div class="placement-slot">
+                                <span class="placement-label first">1st</span>
+                                <div class="team-logo empty first" data-placement="1">TBD</div>
+                            </div>
+                            <div class="placement-slot">
+                                <span class="placement-label second">2nd</span>
+                                <div class="team-logo empty second" data-placement="2">TBD</div>
+                            </div>
+                            <div class="placement-slot">
+                                <span class="placement-label third">3rd</span>
+                                <div class="team-logo empty third" data-placement="3">TBD</div>
+                            </div>
+                            <div class="placement-slot">
+                                <span class="placement-label">4th</span>
+                                <div class="team-logo empty" data-placement="4">TBD</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                
+                <h3 class="category-title">Minor LITMUS</h3>
+                {% for game in litmus_games %}
+                    {% if game.category == 'minor' %}
+                    <div class="game-row" data-game-id="{{ game.id }}">
+                        <div class="game-name">
+                            {{ game.name }}
+                            <div class="game-info">{{ game.points_1st }}/{{ game.points_2nd }}/{{ game.points_3rd }}/{{ game.points_4th }} pts</div>
+                        </div>
+                        <div class="placements">
+                            <div class="placement-slot">
+                                <span class="placement-label first">1st</span>
+                                <div class="team-logo empty first" data-placement="1">TBD</div>
+                            </div>
+                            <div class="placement-slot">
+                                <span class="placement-label second">2nd</span>
+                                <div class="team-logo empty second" data-placement="2">TBD</div>
+                            </div>
+                            <div class="placement-slot">
+                                <span class="placement-label third">3rd</span>
+                                <div class="team-logo empty third" data-placement="3">TBD</div>
+                            </div>
+                            <div class="placement-slot">
+                                <span class="placement-label">4th</span>
+                                <div class="team-logo empty" data-placement="4">TBD</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Minigames Tab -->
+        <div class="tab-content" id="minigames-content">
+            <div class="leaderboard-section">
+                {% for game in minigames %}
+                <div class="game-row" data-game-id="{{ game.id }}">
+                    <div class="game-name">
+                        {{ game.name }}
+                        <div class="game-info">{{ game.points_1st }}/{{ game.points_2nd }}/{{ game.points_3rd }}/{{ game.points_4th }} pts</div>
+                    </div>
+                    <div class="placements">
+                        <div class="placement-slot">
+                            <span class="placement-label first">1st</span>
+                            <div class="team-logo empty first" data-placement="1">TBD</div>
+                        </div>
+                        <div class="placement-slot">
+                            <span class="placement-label second">2nd</span>
+                            <div class="team-logo empty second" data-placement="2">TBD</div>
+                        </div>
+                        <div class="placement-slot">
+                            <span class="placement-label third">3rd</span>
+                            <div class="team-logo empty third" data-placement="3">TBD</div>
+                        </div>
+                        <div class="placement-slot">
+                            <span class="placement-label">4th</span>
+                            <div class="team-logo empty" data-placement="4">TBD</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Links -->
+        <div class="link-section">
+            <a href="/">← Back to Scoreboard</a>
+            <a href="/logs/">View Logs</a>
+        </div>
+    </div>
+    
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + '-content').classList.add('active');
+            });
+        });
+        
+        function updateGameRowDisplay(gameId, placements) {
+            const gameRow = document.querySelector(`.game-row[data-game-id="${gameId}"]`);
+            if (!gameRow) return;
+            
+            // Reset all logos
+            gameRow.querySelectorAll('.team-logo').forEach(logo => {
+                const placement = logo.dataset.placement;
+                let classes = 'team-logo empty';
+                if (placement == '1') classes += ' first';
+                else if (placement == '2') classes += ' second';
+                else if (placement == '3') classes += ' third';
+                logo.className = classes;
+                logo.textContent = 'TBD';
+            });
+            
+            // Set team logos based on placements
+            Object.entries(placements).forEach(([team, placement]) => {
+                const logoSlot = gameRow.querySelector(`[data-placement="${placement}"]`);
+                if (logoSlot) {
+                    let classes = `team-logo ${team}`;
+                    if (placement == 1) classes += ' first';
+                    else if (placement == 2) classes += ' second';
+                    else if (placement == 3) classes += ' third';
+                    logoSlot.className = classes;
+                    logoSlot.textContent = team.charAt(0).toUpperCase();
+                }
+            });
+        }
+        
+        function loadAllGameResults() {
+            fetch('/api/game-results/')
+                .then(response => response.json())
+                .then(data => {
+                    Object.entries(data).forEach(([gameId, placements]) => {
+                        updateGameRowDisplay(gameId, placements);
+                    });
+                })
+                .catch(error => console.error('Error loading game results:', error));
+        }
+        
+        function updateScores() {
+            fetch('/api/scores/')
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(team => {
+                        const element = document.querySelector(`[data-team="${team.name}"]`);
+                        if (element) {
+                            element.textContent = team.points;
+                        }
+                    });
+                })
+                .catch(error => console.error('Error updating scores:', error));
+        }
+        
+        // Initialize
+        loadAllGameResults();
+        updateScores();
+        
+        // Auto-refresh every 5 seconds
+        setInterval(() => {
+            loadAllGameResults();
+            updateScores();
+        }, 5000);
+    </script>
+</body>
+</html>

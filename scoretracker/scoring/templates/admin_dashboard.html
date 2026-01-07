@@ -337,7 +337,123 @@
         </div>
         
         <div class="form-section">
-            <h2>point adder</h2>
+            <h2>Add Game Result</h2>
+            <form id="add-game-result-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="game">Select Game/Event:</label>
+                    <select id="game" name="game_id" required>
+                        <option value="">-- Choose a game/event --</option>
+                        {% for game in all_games %}
+                        <option value="{{ game.id }}" data-category="{{ game.category }}" data-type="{{ game.type }}">
+                            {{ game.name }} ({{ game.get_type_display }} - {{ game.get_category_display }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="result-team">Select Team:</label>
+                    <select id="result-team" name="team" required>
+                        <option value="">-- Choose a team --</option>
+                        <option value="shinobi">Shinobi</option>
+                        <option value="pegasus">Pegasus</option>
+                        <option value="chimera">Chimera</option>
+                        <option value="phoenix">Phoenix</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="placement">Placement:</label>
+                    <select id="placement" name="placement" required>
+                        <option value="">-- Select placement --</option>
+                        <option value="1">1st Place</option>
+                        <option value="2">2nd Place</option>
+                        <option value="3">3rd Place</option>
+                        <option value="4">4th Place</option>
+                        <option value="5">DQ (Disqualified)</option>
+                    </select>
+                </div>
+                
+                <div id="points-preview" style="background: #e3f2fd; padding: 12px; border-radius: 6px; margin-bottom: 15px; display: none;">
+                    <strong>Points to be awarded:</strong> <span id="points-amount" style="font-size: 20px; color: #1976d2;">0</span>
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn-add">Submit Result</button>
+                </div>
+                
+                <div id="game-message" class="message"></div>
+            </form>
+        </div>
+        
+        <div class="form-section">
+            <h2>Manage Game Leaderboards</h2>
+            <p style="color: #666; margin-bottom: 15px; font-size: 14px;">Set all placements for a game at once</p>
+            
+            <div class="form-group">
+                <label for="leaderboard-game">Select Game:</label>
+                <select id="leaderboard-game">
+                    <option value="">-- Choose a game --</option>
+                    {% for game in all_games %}
+                    <option value="{{ game.id }}">{{ game.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div id="leaderboard-placements" style="display: none;">
+                <div class="form-group">
+                    <label for="leaderboard-1st">1st Place:</label>
+                    <select id="leaderboard-1st">
+                        <option value="">-- Select team --</option>
+                        <option value="shinobi">Shinobi</option>
+                        <option value="pegasus">Pegasus</option>
+                        <option value="chimera">Chimera</option>
+                        <option value="phoenix">Phoenix</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="leaderboard-2nd">2nd Place:</label>
+                    <select id="leaderboard-2nd">
+                        <option value="">-- Select team --</option>
+                        <option value="shinobi">Shinobi</option>
+                        <option value="pegasus">Pegasus</option>
+                        <option value="chimera">Chimera</option>
+                        <option value="phoenix">Phoenix</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="leaderboard-3rd">3rd Place:</label>
+                    <select id="leaderboard-3rd">
+                        <option value="">-- Select team --</option>
+                        <option value="shinobi">Shinobi</option>
+                        <option value="pegasus">Pegasus</option>
+                        <option value="chimera">Chimera</option>
+                        <option value="phoenix">Phoenix</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="leaderboard-4th">4th Place:</label>
+                    <select id="leaderboard-4th">
+                        <option value="">-- Select team --</option>
+                        <option value="shinobi">Shinobi</option>
+                        <option value="pegasus">Pegasus</option>
+                        <option value="chimera">Chimera</option>
+                        <option value="phoenix">Phoenix</option>
+                    </select>
+                </div>
+                
+                <button type="button" class="btn-add" onclick="saveLeaderboard()" style="width: 100%; margin-bottom: 10px;">Save Leaderboard</button>
+                <button type="button" class="btn-reset" onclick="clearGameResults()" style="width: 100%;">Clear Results for This Game</button>
+                <div id="leaderboard-message" class="message"></div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h2>Manual Point Entry (Legacy)</h2>
             <form id="add-points-form">
                 {% csrf_token %}
                 <div class="form-group">
@@ -422,6 +538,270 @@
     </div>
     
     <script>
+        // Game points calculation data
+        const gamePointsData = {
+            {% for game in all_games %}
+            '{{ game.id }}': {
+                category: '{{ game.category }}',
+                points: {
+                    '1': {{ game.points_1st }},
+                    '2': {{ game.points_2nd }},
+                    '3': {{ game.points_3rd }},
+                    '4': {{ game.points_4th }},
+                    '5': {{ game.points_dq }}
+                }
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        };
+        
+        // Update points preview when game or placement changes
+        function updatePointsPreview() {
+            const gameSelect = document.getElementById('game');
+            const placementSelect = document.getElementById('placement');
+            const previewDiv = document.getElementById('points-preview');
+            const pointsAmount = document.getElementById('points-amount');
+            
+            const gameId = gameSelect.value;
+            const placement = placementSelect.value;
+            
+            if (gameId && placement && gamePointsData[gameId]) {
+                const points = gamePointsData[gameId].points[placement];
+                pointsAmount.textContent = points;
+                previewDiv.style.display = 'block';
+            } else {
+                previewDiv.style.display = 'none';
+            }
+        }
+        
+        document.getElementById('game').addEventListener('change', updatePointsPreview);
+        document.getElementById('placement').addEventListener('change', updatePointsPreview);
+        
+        // Leaderboard management
+        document.getElementById('leaderboard-game').addEventListener('change', function() {
+            const placementsDiv = document.getElementById('leaderboard-placements');
+            if (this.value) {
+                placementsDiv.style.display = 'block';
+                loadGameLeaderboard(this.value);
+            } else {
+                placementsDiv.style.display = 'none';
+            }
+        });
+        
+        // Add change listeners to all placement selects to validate duplicates
+        ['leaderboard-1st', 'leaderboard-2nd', 'leaderboard-3rd', 'leaderboard-4th'].forEach(selectId => {
+            document.getElementById(selectId).addEventListener('change', validatePlacementSelections);
+        });
+        
+        function validatePlacementSelections() {
+            const selectedTeams = {};
+            const selects = ['leaderboard-1st', 'leaderboard-2nd', 'leaderboard-3rd', 'leaderboard-4th'];
+            
+            // Reset all errors
+            selects.forEach(id => {
+                const select = document.getElementById(id);
+                select.style.border = '2px solid #ddd';
+            });
+            
+            // Check for duplicates
+            selects.forEach(id => {
+                const select = document.getElementById(id);
+                const team = select.value;
+                
+                if (team) {
+                    if (selectedTeams[team]) {
+                        // Duplicate found
+                        select.style.border = '2px solid #ff3333';
+                        selectedTeams[team].style.border = '2px solid #ff3333';
+                    } else {
+                        selectedTeams[team] = select;
+                    }
+                }
+            });
+        }
+        
+        function loadGameLeaderboard(gameId) {
+            fetch('/api/game-results/')
+                .then(response => response.json())
+                .then(data => {
+                    const gamePlacements = data[gameId] || {};
+                    
+                    // Reset all selects
+                    document.getElementById('leaderboard-1st').value = '';
+                    document.getElementById('leaderboard-2nd').value = '';
+                    document.getElementById('leaderboard-3rd').value = '';
+                    document.getElementById('leaderboard-4th').value = '';
+                    
+                    // Set values based on current placements
+                    Object.entries(gamePlacements).forEach(([team, placement]) => {
+                        const selectId = `leaderboard-${['', '1st', '2nd', '3rd', '4th'][placement]}`;
+                        const select = document.getElementById(selectId);
+                        if (select) select.value = team;
+                    });
+                });
+        }
+        
+        function saveLeaderboard() {
+            const gameId = document.getElementById('leaderboard-game').value;
+            if (!gameId) return;
+            
+            const team1st = document.getElementById('leaderboard-1st').value;
+            const team2nd = document.getElementById('leaderboard-2nd').value;
+            const team3rd = document.getElementById('leaderboard-3rd').value;
+            const team4th = document.getElementById('leaderboard-4th').value;
+            
+            // Check for duplicate teams
+            const teams = [team1st, team2nd, team3rd, team4th].filter(t => t);
+            const uniqueTeams = new Set(teams);
+            
+            if (teams.length !== uniqueTeams.size) {
+                const messageEl = document.getElementById('leaderboard-message');
+                messageEl.textContent = 'Error: Cannot assign the same team to multiple placements!';
+                messageEl.className = 'message error';
+                messageEl.style.display = 'block';
+                setTimeout(() => {
+                    messageEl.style.display = 'none';
+                }, 3000);
+                return;
+            }
+            
+            const placements = {};
+            if (team1st) placements[team1st] = 1;
+            if (team2nd) placements[team2nd] = 2;
+            if (team3rd) placements[team3rd] = 3;
+            if (team4th) placements[team4th] = 4;
+            
+            const formData = new FormData();
+            formData.append('game_id', gameId);
+            formData.append('placements', JSON.stringify(placements));
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+            
+            const messageEl = document.getElementById('leaderboard-message');
+            
+            fetch('/api/set-game-result/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    messageEl.textContent = data.message;
+                    messageEl.className = 'message success';
+                    messageEl.style.display = 'block';
+                    updateScores();
+                } else {
+                    messageEl.textContent = data.message || 'Error saving leaderboard';
+                    messageEl.className = 'message error';
+                    messageEl.style.display = 'block';
+                }
+                
+                setTimeout(() => {
+                    messageEl.style.display = 'none';
+                }, 3000);
+            })
+            .catch(error => {
+                messageEl.textContent = 'Network error. Please try again.';
+                messageEl.className = 'message error';
+                messageEl.style.display = 'block';
+                console.error('Error:', error);
+            });
+        }
+        
+        function clearGameResults() {
+            const gameId = document.getElementById('leaderboard-game').value;
+            if (!gameId) return;
+            
+            if (!confirm('Are you sure you want to clear all results for this game? This will remove all placements and refund points.')) {
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('game_id', gameId);
+            formData.append('placements', JSON.stringify({})); // Empty placements
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+            
+            const messageEl = document.getElementById('leaderboard-message');
+            
+            fetch('/api/set-game-result/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    messageEl.textContent = 'Game results cleared successfully!';
+                    messageEl.className = 'message success';
+                    messageEl.style.display = 'block';
+                    
+                    // Clear all dropdowns
+                    document.getElementById('leaderboard-1st').value = '';
+                    document.getElementById('leaderboard-2nd').value = '';
+                    document.getElementById('leaderboard-3rd').value = '';
+                    document.getElementById('leaderboard-4th').value = '';
+                    
+                    updateScores();
+                } else {
+                    messageEl.textContent = data.message || 'Error clearing results';
+                    messageEl.className = 'message error';
+                    messageEl.style.display = 'block';
+                }
+                
+                setTimeout(() => {
+                    messageEl.style.display = 'none';
+                }, 3000);
+            })
+            .catch(error => {
+                messageEl.textContent = 'Network error. Please try again.';
+                messageEl.className = 'message error';
+                messageEl.style.display = 'block';
+                console.error('Error:', error);
+            });
+        }
+        
+        // Add game result form submission
+        document.getElementById('add-game-result-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const messageEl = document.getElementById('game-message');
+            
+            fetch('/api/add-game-result/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    messageEl.textContent = data.message;
+                    messageEl.className = 'message success';
+                    messageEl.style.display = 'block';
+                    updateScores();
+                    
+                    // Reset form
+                    document.getElementById('game').value = '';
+                    document.getElementById('result-team').value = '';
+                    document.getElementById('placement').value = '';
+                    document.getElementById('points-preview').style.display = 'none';
+                } else {
+                    messageEl.textContent = data.message || 'Error adding result';
+                    messageEl.className = 'message error';
+                    messageEl.style.display = 'block';
+                }
+                
+                setTimeout(() => {
+                    messageEl.style.display = 'none';
+                }, 3000);
+            })
+            .catch(error => {
+                messageEl.textContent = 'Network error. Please try again.';
+                messageEl.className = 'message error';
+                messageEl.style.display = 'block';
+                console.error('Error:', error);
+            });
+        });
+        
         // Toggle reason field based on points value
         function toggleReasonField() {
             const points = parseInt(document.getElementById('points').value) || 0;
