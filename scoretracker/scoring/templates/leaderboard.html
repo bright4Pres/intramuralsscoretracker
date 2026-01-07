@@ -116,8 +116,6 @@
         .score-card .points {
             font-size: 36px;
             font-weight: bold;
-            min-width: 80px;
-            max-width: 120px;
             margin: 0 auto;
             font-variant-numeric: tabular-nums;
             text-align: center;
@@ -209,8 +207,8 @@
         .game-name {
             flex: 1;
             color: #fff;
-            min-width: 250px;
-            font-size: 35px;
+            min-width: 200px;
+            font-size: 28px;
         }
         
         .game-info {
@@ -332,69 +330,145 @@
         /* Responsive */
         @media (max-width: 768px) {
             body {
-                padding: 10px;
+                padding: 0;
             }
             
             .container {
-                padding: 20px;
+                padding: 0;
             }
             
             h1 {
-                font-size: 1.8em;
+                font-size: 1.5em;
+                padding: 20px 15px;
+                letter-spacing: 2px;
+            }
+            
+            .score-card {
+                padding: 12px 8px;
+            }
+            
+            .score-card h3 {
+                font-size: 11px;
             }
             
             .score-card .points {
-                font-size: 32px;
-                min-width: 75px;
-                max-width: 110px;
+                font-size: 28px;
+            }
+            
+            .tab {
+                padding: 12px 15px;
+                font-size: 11px;
+                letter-spacing: 1px;
+            }
+            
+            .game-name {
+                font-size: 20px;
+                min-width: 0;
+                margin-bottom: 15px;
+            }
+            
+            .game-info {
+                font-size: 11px;
+            }
+            
+            .category-title {
+                font-size: 16px;
+                padding: 10px 15px;
+                letter-spacing: 2px;
             }
             
             .placements {
                 flex-wrap: wrap;
-                gap: 10px;
+                gap: 8px;
+                justify-content: center;
             }
             
             .team-logo {
-                width: 50px;
-                height: 50px;
+                width: 45px;
+                height: 45px;
                 font-size: 14px;
             }
             
             .game-row {
                 flex-direction: column;
                 align-items: flex-start;
-            }
-            
-            .game-name {
-                margin-bottom: 10px;
-                width: 100%;
+                padding: 15px;
             }
             
             .placements {
                 width: 100%;
-                justify-content: center;
             }
         }
         
         @media (max-width: 480px) {
+            h1 {
+                font-size: 1.2em;
+                padding: 15px 10px;
+                letter-spacing: 1px;
+            }
+            
             .current-scores {
-                grid-template-columns: repeat(2, 1fr);
+                flex-wrap: wrap;
             }
             
             .score-card {
-                padding: 15px;
+                flex: 1 1 calc(50% - 1px);
+                padding: 12px 5px;
+                min-width: 0;
+            }
+            
+            .score-card h3 {
+                font-size: 10px;
             }
             
             .score-card .points {
-                font-size: 28px;
-                min-width: 70px;
-                max-width: 100px;
+                font-size: 24px;
+            }
+            
+            .tab {
+                padding: 10px 12px;
+                font-size: 9px;
+                letter-spacing: 0.5px;
+            }
+            
+            .game-name {
+                font-size: 16px;
+            }
+            
+            .game-info {
+                font-size: 10px;
+            }
+            
+            .game-row {
+                padding: 12px 10px;
+            }
+            
+            .category-title {
+                font-size: 14px;
+                padding: 8px 10px;
+                letter-spacing: 1px;
+            }
+            
+            .placements {
+                gap: 6px;
             }
             
             .team-logo {
-                width: 45px;
-                height: 45px;
+                width: 40px;
+                height: 40px;
                 font-size: 12px;
+            }
+            
+            .placement-label {
+                font-size: 9px;
+                margin-bottom: 4px;
+            }
+            
+            .link-section a {
+                padding: 10px 16px;
+                font-size: 11px;
+                margin: 5px 4px;
+                letter-spacing: 1px;
             }
         }
     </style>
@@ -417,6 +491,7 @@
         <div class="tabs">
             <button class="tab active" data-tab="sports">Sports</button>
             <button class="tab" data-tab="litmus">LITMUS</button>
+            <button class="tab" data-tab="mrmisspis ay">Mr & Miss PISAY</button>
             <button class="tab" data-tab="minigames">Minigames</button>
         </div>
         
@@ -547,6 +622,39 @@
                         </div>
                     </div>
                     {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Mr & Miss PISAY Tab -->
+        <div class="tab-content" id="mrmisspis ay-content">
+            <div class="leaderboard-section">
+                {% for game in mr_miss_pisay %}
+                <div class="game-row" data-game-id="{{ game.id }}">
+                    <div class="game-name">
+                        {{ game.name }}
+                        <div class="game-info">{{ game.points_1st }}/{{ game.points_2nd }}/{{ game.points_3rd }}/{{ game.points_4th }} pts
+                        {% if game.notes %} | {{ game.notes }}{% endif %}</div>
+                    </div>
+                    <div class="placements">
+                        <div class="placement-slot">
+                            <span class="placement-label first">1st</span>
+                            <div class="team-logo empty first" data-placement="1">TBD</div>
+                        </div>
+                        <div class="placement-slot">
+                            <span class="placement-label second">2nd</span>
+                            <div class="team-logo empty second" data-placement="2">TBD</div>
+                        </div>
+                        <div class="placement-slot">
+                            <span class="placement-label third">3rd</span>
+                            <div class="team-logo empty third" data-placement="3">TBD</div>
+                        </div>
+                        <div class="placement-slot">
+                            <span class="placement-label">4th</span>
+                            <div class="team-logo empty" data-placement="4">TBD</div>
+                        </div>
+                    </div>
+                </div>
                 {% endfor %}
             </div>
         </div>
