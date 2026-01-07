@@ -8,7 +8,7 @@
 
 @keyframes marquee {
     0% {
-        text-shadow: 0 0 0 rgb(255 255 255 / 0), 0 0 0 rgb(255 255 255 / 0);
+        text-shadow: 0 0 0 rgba(255, 255, 255, 0), 0 0 0 rgb(255 255 255 / 0);
         transform: translate(0, -100%) rotate(5deg);
     }
 
@@ -160,7 +160,6 @@ main {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border: 2px solid rgba(255, 255, 255, 0.1);
     transition: all 0.5s ease;
     z-index: 1;
 }
@@ -184,7 +183,7 @@ main {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.8);
     z-index: -1;
 }
 
@@ -193,9 +192,35 @@ main {
     grid-row: 1;
 }
 
+.points__quadrant--shinobi::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/static/img/shinobi.png');
+    background-position: center;
+    filter: brightness(0.7);
+    z-index: -1;
+}
+
 .points__quadrant--pegasus {
     grid-column: 2;
     grid-row: 1;
+}
+
+.points__quadrant--pegasus::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/static/img/pegasus.png');
+    background-position: center;
+    filter: brightness(0.7);
+    z-index: -1;
 }
 
 .points__quadrant--chimera {
@@ -203,16 +228,47 @@ main {
     grid-row: 1;
 }
 
+.points__quadrant--chimera::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/static/img/chimera.png');
+    background-position: center;
+    filter: brightness(0.7);
+    z-index: -1;
+}
+
 .points__quadrant--phoenix {
     grid-column: 4;
     grid-row: 1;
+}
+
+.points__quadrant--phoenix::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/static/img/phoenix.png');
+    background-position: center;
+    filter: brightness(0.7);
+    z-index: -1;
+}
+
+.points__quadrant--chimera .points__team,
+.points__quadrant--chimera .points__label {
+    color: white;
 }
 
 .points__label {
     font-size: min(5vw, 8vh);
     font-weight: 600;
     margin-top: 2vh;
-    opacity: 0.8;
+    opacity: 1;
     text-transform: uppercase;
     letter-spacing: 0.1em;
 }
@@ -273,7 +329,7 @@ main {
 }
 
 .goal--chimera {
-    --color-score: var(--color-team-chimera);
+    --color-score: var(white);
 }
 
 .goal--phoenix {
