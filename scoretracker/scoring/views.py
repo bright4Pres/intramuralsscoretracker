@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from .models import Team, ScoreLog, Game, GameResult, SpecialAward, Contestant
@@ -8,6 +8,10 @@ import json
 
 # Simple password - change this to whatever you want
 ADMIN_PASSWORD = "ZRC2026!intramsnibright"
+
+def health_check(request):
+    """Lightweight endpoint for uptime monitoring."""
+    return HttpResponse("OK", status=200)
 
 def home(request):
     """Display the scoreboard for 4 teams."""

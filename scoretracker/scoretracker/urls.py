@@ -22,6 +22,7 @@ from scoring import views
 
 urlpatterns = [
     path('', views.home, name='home'),
+    path('health/', views.health_check, name='health_check'),
     path('leaderboard/', views.leaderboard, name='leaderboard'),
     path('logs/', views.logs, name='logs'),
     path('admin-login/', views.admin_login, name='admin_login'),
