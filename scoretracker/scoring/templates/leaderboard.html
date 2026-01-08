@@ -774,9 +774,9 @@
                                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: rgba(0,0,0,0.3); border-radius: 6px;">
                                     <div style="font-size: 13px; color: #ccc;">{{ award.award_name }}</div>
                                     {% if award.team %}
-                                    <div class="team-logo {{ award.team }}" style="font-size: 13px; margin: 0;">{{ award.get_team_display }}</div>
+                                    <div class="team-logo {{ award.team }}" style="width: 35px; height: 35px; font-size: 16px; margin: 0;">{{ award.team|slice:":1"|upper }}</div>
                                     {% else %}
-                                    <div class="team-logo empty" style="font-size: 13px; margin: 0;">TBD</div>
+                                    <div class="team-logo empty" style="width: 35px; height: 35px; font-size: 11px; margin: 0;">TBD</div>
                                     {% endif %}
                                 </div>
                                 {% endif %}
