@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: scoretracker
+    runtime: python
+    plan: free
+    branch: main
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn scoretracker.scoretracker.wsgi:application"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        value: dwiynqoyd
+      - key: CLOUDINARY_API_KEY
+        value: "628443394577536"
+      - key: CLOUDINARY_API_SECRET
+        value: IPwWMyr8WCX8WsJg8FHE_rmvjJ8
+    autoDeploy: true
