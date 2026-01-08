@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from .models import Team, ScoreLog, Game, GameResult
+from .models import Team, ScoreLog, Game, GameResult, SpecialAward
 from django.db.models import Q
 
 # Simple password - change this to whatever you want
@@ -209,9 +209,13 @@ def leaderboard(request):
     esports_names = ['Mobile Legends', 'Call of Duty Mobile', 'Valorant']
     sports_games = Game.objects.filter(type='sports', is_active=True).exclude(name__in=esports_names).order_by('category', 'name')
     esports_games = Game.objects.filter(type='sports', name__in=esports_names, is_active=True).order_by('name')
-    litmus_games = Game.objects.filter(type='litmus', is_active=True).exclude(name__icontains='mr. and ms. pisay').order_by('category', 'name')
-    mr_miss_pisay = Game.objects.filter(type='litmus', name__icontains='mr. and ms. pisay', is_active=True)
+    # Exclude Mr. Pisay and Miss Pisay from litmus_games
+    litmus_games = Game.objects.filter(type='litmus', is_active=True).exclude(name__in=['Mr. Pisay', 'Miss Pisay']).order_by('category', 'name')
+    mr_miss_pisay = Game.objects.filter(type='litmus', name__in=['Mr. Pisay', 'Miss Pisay'], is_active=True).order_by('name')
     minigames = Game.objects.filter(type='minigame', is_active=True).order_by('name')
+    
+    # Get special awards for Mr. and Miss Pisay
+    special_awards = SpecialAward.objects.filter(game__in=mr_miss_pisay).select_related('game')
     
     return render(request, 'leaderboard.html', {
         'teams': teams,
@@ -220,6 +224,7 @@ def leaderboard(request):
         'litmus_games': litmus_games,
         'mr_miss_pisay': mr_miss_pisay,
         'minigames': minigames,
+        'special_awards': special_awards,
     })
 
 
@@ -302,3 +307,78 @@ def get_game_results(request):
         results_data[result.game.id][result.team] = result.placement
     
     return JsonResponse(results_data, safe=False)
+
+
+@require_http_methods(["POST"])
+def add_special_award(request):
+    """API endpoint to add a special award."""
+    game_id = request.POST.get('game_id')
+    award_name = request.POST.get('award_name')
+    team = request.POST.get('team')
+    
+    if not game_id or not award_name or not team:
+        return JsonResponse({'success': False, 'message': 'Missing required fields'}, status=400)
+    
+    try:
+        game = Game.objects.get(id=game_id)
+        
+        # Create or update award
+        award, created = SpecialAward.objects.update_or_create(
+            game=game,
+            award_name=award_name,
+            defaults={'team': team, 'points': 5}
+        )
+        
+        team_display = dict(Team.TEAM_CHOICES).get(team, team)
+        message = f"Awarded '{award_name}' to {team_display}!" if created else f"Updated '{award_name}' to {team_display}!"
+        
+        return JsonResponse({'success': True, 'message': message})
+    except Game.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Game not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=400)
+
+
+@require_http_methods(["GET"])
+def get_special_awards(request, game_id):
+    """API endpoint to get all special awards for a game."""
+    try:
+        awards = SpecialAward.objects.filter(game_id=game_id)
+        awards_data = []
+        
+        for award in awards:
+            team_display = dict(Team.TEAM_CHOICES).get(award.team, 'TBD') if award.team else 'TBD'
+            awards_data.append({
+                'id': award.id,
+                'award_name': award.award_name,
+                'team': award.team,
+                'team_display': team_display,
+                'points': award.points
+            })
+        
+        return JsonResponse(awards_data, safe=False)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=400)
+
+
+@require_http_methods(["POST"])
+def delete_special_award(request, award_id):
+    """API endpoint to clear a special award (set team to None instead of deleting)."""
+    try:
+        award = SpecialAward.objects.get(id=award_id)
+        
+        # Remove points from team if assigned
+        if award.team:
+            team = Team.objects.get(name=award.team)
+            team.points -= award.points
+            team.save()
+            
+            # Clear the team assignment but keep the award
+            award.team = None
+            award.save()
+        
+        return JsonResponse({'success': True, 'message': 'Award cleared'})
+    except SpecialAward.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Award not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=400)

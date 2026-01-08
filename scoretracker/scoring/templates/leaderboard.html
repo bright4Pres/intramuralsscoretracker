@@ -565,7 +565,7 @@
             <button class="tab active" data-tab="sports">Sports</button>
             <button class="tab" data-tab="esports">Esports</button>
             <button class="tab" data-tab="litmus">LITMUS</button>
-            <button class="tab" data-tab="mrmisspis ay">Mr & Miss PISAY</button>
+            <button class="tab" data-tab="pisay">Mr. & Miss Pisay</button>
             <button class="tab" data-tab="minigames">Minigames</button>
         </div>
         
@@ -733,9 +733,10 @@
             </div>
         </div>
         
-        <!-- Mr & Miss PISAY Tab -->
-        <div class="tab-content" id="mrmisspis ay-content">
+        <!-- Mr. & Miss Pisay Tab -->
+        <div class="tab-content" id="pisay-content">
             <div class="leaderboard-section">
+                <h3 class="category-title">Mr. & Miss Pisay</h3>
                 {% for game in mr_miss_pisay %}
                 <div class="game-row" data-game-id="{{ game.id }}">
                     <div class="game-name">
@@ -762,10 +763,42 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Special Awards Section -->
+                <div style="margin-top: 15px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; border-left: 4px solid #ff3333;">
+                    <div style="font-size: 14px; color: #aaa; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Special Awards (5 pts each)</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px;">
+                        {% with game_awards=special_awards|dictsort:"award_name" %}
+                            {% for award in game_awards %}
+                                {% if award.game.id == game.id %}
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: rgba(0,0,0,0.3); border-radius: 6px;">
+                                    <div style="font-size: 13px; color: #ccc;">{{ award.award_name }}</div>
+                                    {% if award.team %}
+                                    <div class="team-logo {{ award.team }}" style="font-size: 13px; margin: 0;">{{ award.get_team_display }}</div>
+                                    {% else %}
+                                    <div class="team-logo empty" style="font-size: 13px; margin: 0;">TBD</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endwith %}
+                        
+                        <!-- Show placeholders if no awards yet -->
+                        {% with game_awards_count=special_awards|length %}
+                            {% if game_awards_count == 0 %}
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: rgba(0,0,0,0.3); border-radius: 6px;">
+                                    <div style="font-size: 13px; color: #666; font-style: italic;">No awards assigned yet</div>
+                                    <div class="team-logo empty" style="font-size: 13px; margin: 0;">TBD</div>
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+                
                 {% endfor %}
             </div>
         </div>
-        
+
         <!-- Minigames Tab -->
         <div class="tab-content" id="minigames-content">
             <div class="leaderboard-section">

@@ -32,5 +32,9 @@ urlpatterns = [
     path('api/reset-scores/', views.reset_scores, name='reset_scores'),
     path('api/game-results/', views.get_game_results, name='get_game_results'),
     path('api/set-game-result/', views.set_game_result, name='set_game_result'),
+    path('api/add-special-award/', views.add_special_award, name='add_special_award'),
+    path('api/special-awards/<int:game_id>/', views.get_special_awards, name='get_special_awards'),
+    path('api/delete-special-award/<int:award_id>/', views.delete_special_award, name='delete_special_award'),
+    path('api/clear-special-award/<int:award_id>/', views.delete_special_award, name='clear_special_award'),
     path('admin/', admin.site.urls),
 ]

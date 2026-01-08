@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from scoring.models import Game
+from scoring.models import Game, SpecialAward
 
 
 class Command(BaseCommand):
@@ -41,6 +41,7 @@ class Command(BaseCommand):
         # LITMUS - Major Events
         litmus_major = [
             'Neo-Ethnic Dance',
+            'Battle of the Bands',
             'Saludo',
             'Speech Choir',
         ]
@@ -67,7 +68,7 @@ class Command(BaseCommand):
             'points_3rd': 12,
             'points_4th': 8,
             'points_dq': 5,
-            'notes': 'Special awards: 5 points per award'
+            'notes': '4 special awards: 5 points each'
         })
         
         games_data.append({
@@ -79,7 +80,7 @@ class Command(BaseCommand):
             'points_3rd': 12,
             'points_4th': 8,
             'points_dq': 5,
-            'notes': 'Special awards: 5 points per award'
+            'notes': '4 special awards: 5 points each'
         })
         
         # LITMUS - Minor Events
@@ -206,6 +207,34 @@ class Command(BaseCommand):
                 updated_count += 1
                 self.stdout.write(self.style.WARNING(f'Updated: {game.name}'))
         
+        # Create special awards for Mr. and Miss Pisay
+        self.stdout.write('\nCreating special awards for Mr. & Miss Pisay...')
+        mr_pisay = Game.objects.filter(name='Mr. Pisay').first()
+        miss_pisay = Game.objects.filter(name='Miss Pisay').first()
+        
+        awards_created = 0
+        if mr_pisay:
+            for i in range(1, 5):
+                award, created = SpecialAward.objects.get_or_create(
+                    game=mr_pisay,
+                    award_name=f'Award {i}',
+                    defaults={'points': 5, 'team': None}
+                )
+                if created:
+                    awards_created += 1
+                    self.stdout.write(self.style.SUCCESS(f'Created: Mr. Pisay - Award {i}'))
+        
+        if miss_pisay:
+            for i in range(1, 5):
+                award, created = SpecialAward.objects.get_or_create(
+                    game=miss_pisay,
+                    award_name=f'Award {i}',
+                    defaults={'points': 5, 'team': None}
+                )
+                if created:
+                    awards_created += 1
+                    self.stdout.write(self.style.SUCCESS(f'Created: Miss Pisay - Award {i}'))
+        
         self.stdout.write(self.style.SUCCESS(
-            f'\nFinished! Created {created_count} games, Updated {updated_count} games'
+            f'\nFinished! Created {created_count} games, Updated {updated_count} games, Created {awards_created} special awards'
         ))

@@ -131,3 +131,48 @@ class ScoreLog(models.Model):
     def __str__(self):
         opponent_text = f"vs {self.opponent}" if self.opponent else "vs All"
         return f"{self.get_team_display()} scored {self.points} pts in {self.event} {opponent_text}"
+
+
+class SpecialAward(models.Model):
+    """Model to track special awards for Mr. and Miss Pisay events."""
+    game = models.ForeignKey('Game', on_delete=models.CASCADE, related_name='special_awards')
+    award_name = models.CharField(max_length=100)  # e.g., "Best in Evening Gown", "People's Choice"
+    team = models.CharField(max_length=20, choices=Team.TEAM_CHOICES, blank=True, null=True)
+    points = models.IntegerField(default=5)
+    timestamp = models.DateTimeField(default=timezone.now)
+    
+    class Meta:
+        ordering = ['game', 'award_name']
+        unique_together = ['game', 'award_name']  # Each award name must be unique per game
+    
+    def __str__(self):
+        team_name = dict(Team.TEAM_CHOICES).get(self.team, 'TBD') if self.team else 'TBD'
+        return f"{self.game.name} - {self.award_name}: {team_name}"
+    
+    def save(self, *args, **kwargs):
+        """Auto-update team points when awarding."""
+        # Check if this is an update and team has changed
+        if self.pk:
+            old_award = SpecialAward.objects.get(pk=self.pk)
+            # Remove points from old team if it existed
+            if old_award.team and old_award.team != self.team:
+                old_team = Team.objects.get(name=old_award.team)
+                old_team.points -= old_award.points
+                old_team.save()
+        
+        super().save(*args, **kwargs)
+        
+        # Add points to new team
+        if self.team:
+            team = Team.objects.get(name=self.team)
+            team.points += self.points
+            team.save()
+            
+            # Create score log
+            ScoreLog.objects.create(
+                team=self.team,
+                points=self.points,
+                event=f"{self.game.name} - {self.award_name}",
+                opponent='All',
+                reason="Special Award"
+            )
