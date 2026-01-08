@@ -91,22 +91,6 @@ body {
   transform-origin: center center;
 }
 
-.card-banner {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 200%;
-  height: 200%;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  opacity: 0.25;
-  z-index: 0;
-  pointer-events: none;
-  filter: blur(2px);
-}
-
 .carousel-item {
   position: absolute;
   top: 0;

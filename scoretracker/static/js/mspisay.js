@@ -67,15 +67,6 @@ function generateCards() {
     // Get empire colors
     const empireData = CONFIG.empireColors[contestant.empire] || {};
     const empireColor = empireData.color || '#ffffff';
-    const empireBanner = empireData.banner || '';
-    
-    // Create banner background
-    if (empireBanner) {
-      const banner = document.createElement("div");
-      banner.className = "card-banner";
-      banner.style.backgroundImage = `url(${empireBanner})`;
-      cardWrapper.appendChild(banner);
-    }
     
     // Create card
     const cardEl = document.createElement("div");
