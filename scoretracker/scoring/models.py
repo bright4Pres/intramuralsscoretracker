@@ -163,6 +163,21 @@ class ScoreLog(models.Model):
         return f"{self.get_team_display()} scored {self.points} pts in {self.event} {opponent_text}"
 
 
+class Contestant(models.Model):
+    """Model for Mr. & Ms. Pisay contestants."""
+    name = models.CharField(max_length=100)
+    empire = models.CharField(max_length=20, choices=Team.TEAM_CHOICES)
+    photo = models.ImageField(upload_to='contestants/', blank=True, null=True)
+    order = models.IntegerField(default=0)  # For ordering in the carousel
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ['order', 'name']
+    
+    def __str__(self):
+        return f"{self.name} - {self.get_empire_display()}"
+
+
 class SpecialAward(models.Model):
     """Model to track special awards for Mr. and Miss Pisay events."""
     game = models.ForeignKey('Game', on_delete=models.CASCADE, related_name='special_awards')

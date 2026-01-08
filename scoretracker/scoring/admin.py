@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Team, ScoreLog, Game, GameResult
+from .models import Team, ScoreLog, Game, GameResult, Contestant
 
 
 @admin.register(Game)
@@ -8,6 +8,14 @@ class GameAdmin(admin.ModelAdmin):
     list_filter = ['category', 'type', 'is_active']
     search_fields = ['name']
     list_editable = ['is_active']
+
+
+@admin.register(Contestant)
+class ContestantAdmin(admin.ModelAdmin):
+    list_display = ['name', 'empire', 'order', 'is_active']
+    list_filter = ['empire', 'is_active']
+    search_fields = ['name']
+    list_editable = ['order', 'is_active']
 
 
 @admin.register(GameResult)

@@ -1,0 +1,23 @@
+{% load static %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap');
+ body{
+    font-family: 'Black Ops One', cursive, system-ui;
+    
+ }
+ .cta-btn {
+        margin: 0 auto;
+        display: block;
+    }
+</style>
+<link rel="stylesheet" href="{% static 'css/button.css' %}">
+<div class="noise"></div>
+<div id="cursor"></div>
+<nav class="brutal-nav">
+    <ul class="nav-menu">
+            <li><a href="#" class="nav-link magnetic" data-text="WORK">WORK</a></li>
+            <li><a href="#" class="nav-link magnetic" data-text="ABOUT">ABOUT</a></li>
+            <li><a href="#" class="nav-link magnetic" data-text="LABS">LABS</a></li>
+    </ul>
+</nav>
+<script  src="{% static 'js/button.js' %}"></script>

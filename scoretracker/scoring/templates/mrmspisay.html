@@ -1,0 +1,114 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mr. & Ms. Pisay Gallery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://public.codepenassets.com/css/normalize-5.0.0.min.css">
+    <link rel="stylesheet" href="{% static 'css/mspisay.css' %}">
+    <link rel="icon" type="image/svg" href="{% static 'img/shc.svg' %}">
+    <style>
+        body {
+            font-family: 'Black Ops One', cursive;
+            background: #0d0d0d;
+            color: #fff;
+        }
+        
+        /* Hide scrollbar */
+        ::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+        }
+        
+        * {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        
+        /* Scanline effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,0,0,.3) 2px,
+                rgba(0,0,0,.3) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+        
+        .page-header {
+            color: #fff;
+            margin: 0;
+            padding: 25px 20px;
+            text-align: left;
+            font-size: 2.2em;
+            text-transform: uppercase;
+            background: #1a1a1a;
+            border-bottom: 4px solid #ff3333;
+            letter-spacing: 4px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .page-header::before {
+            content: '▶';
+            color: #ff3333;
+            margin-right: 15px;
+        }
+    </style>
+</head>
+<body>
+<div class="noise"></div>
+<div id="cursor"></div>
+
+<h1 class="page-header">Mr. & Ms. Pisay Gallery</h1>
+
+<div class="carousel-container">
+    <div class="carousel-items">
+    </div>
+</div>
+
+<script id="contestants-data" type="application/json">
+    {{ contestants|safe }}
+</script>
+
+<script id="empire-colors" type="application/json">
+    {
+        "shinobi": {
+            "color": "#DC2626",
+            "banner": "{% static 'img/shinobibanner.png' %}"
+        },
+        "pegasus": {
+            "color": "#FACC15",
+            "banner": "{% static 'img/pegasusbanner.png' %}"
+        },
+        "chimera": {
+            "color": "#1E1B4B",
+            "banner": "{% static 'img/chimerabanner.png' %}"
+        },
+        "phoenix": {
+            "color": "#F97316",
+            "banner": "{% static 'img/phoenixbanner.png' %}"
+        }
+    }
+</script>
+
+<script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/Draggable.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/CustomEase.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/InertiaPlugin.min.js'></script>
+<script src="{% static 'js/mspisay.js' %}"></script>
+</body>
+</html>

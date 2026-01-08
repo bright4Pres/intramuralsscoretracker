@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from .models import Team, ScoreLog, Game, GameResult, SpecialAward
+from .models import Team, ScoreLog, Game, GameResult, SpecialAward, Contestant
 from django.db.models import Q
 
 # Simple password - change this to whatever you want
@@ -382,3 +382,18 @@ def delete_special_award(request, award_id):
         return JsonResponse({'success': False, 'message': 'Award not found'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=400)
+
+def mrmspisay_showcase(request):
+    """Display the Mr. & Miss Pisay showcase page."""
+    contestants = Contestant.objects.filter(is_active=True).order_by('order')
+    contestants_data = []
+    
+    for contestant in contestants:
+        contestants_data.append({
+            'id': contestant.id,
+            'name': contestant.name,
+            'empire': contestant.empire,
+            'photo_url': contestant.photo.url if contestant.photo else '',
+        })
+    
+    return render(request, 'mrmspisay.html', {'contestants': contestants_data})
