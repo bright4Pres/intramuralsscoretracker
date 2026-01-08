@@ -98,6 +98,13 @@ function generateCards() {
       </div>
     `;
     
+    // Add click event to show video modal
+    cardEl.addEventListener('click', () => {
+      if (contestant.video_url) {
+        showVideoModal(contestant.name, contestant.empire, contestant.video_url);
+      }
+    });
+    
     cardWrapper.appendChild(cardEl);
     carouselItemsEl.appendChild(cardWrapper);
     
@@ -106,6 +113,58 @@ function generateCards() {
   }
   initializeZIndices();
 }
+
+// Video Modal Functions
+function showVideoModal(name, empire, videoUrl) {
+  const modal = document.getElementById('videoModal');
+  const modalContent = document.getElementById('videoModalContent');
+  const modalTitle = document.getElementById('videoModalTitle');
+  const videoPlayer = document.getElementById('videoPlayer');
+  const videoSource = document.getElementById('videoSource');
+  
+  // Set content
+  modalTitle.textContent = name;
+  videoSource.src = videoUrl;
+  videoPlayer.load();
+  
+  // Set empire styling
+  modalContent.className = 'video-modal-content ' + empire;
+  
+  // Hide carousel items
+  gsap.to('.card-wrapper', {
+    opacity: 0,
+    scale: 0.8,
+    duration: 0.4,
+    ease: 'power2.inOut'
+  });
+  
+  // Show modal
+  modal.classList.add('active');
+  
+  // Play video
+  videoPlayer.play();
+}
+
+function hideVideoModal() {
+  const modal = document.getElementById('videoModal');
+  const videoPlayer = document.getElementById('videoPlayer');
+  
+  // Pause and reset video
+  videoPlayer.pause();
+  videoPlayer.currentTime = 0;
+  
+  // Hide modal
+  modal.classList.remove('active');
+  
+  // Show carousel items again
+  gsap.to('.card-wrapper', {
+    opacity: 1,
+    scale: 1,
+    duration: 0.4,
+    ease: 'power2.inOut'
+  });
+}
+
 // Initialize z-indices
 function initializeZIndices() {
   const cards = gsap.utils.toArray(".carousel-item");
@@ -901,6 +960,15 @@ function handleResize() {
 }
 // Add event listeners
 window.addEventListener("resize", handleResize);
+
+// Close modal event listeners
+document.getElementById('closeModal').addEventListener('click', hideVideoModal);
+document.getElementById('videoModal').addEventListener('click', (e) => {
+  if (e.target.id === 'videoModal') {
+    hideVideoModal();
+  }
+});
+
 // Initialize
 generateCards();
 initializeCarousel();

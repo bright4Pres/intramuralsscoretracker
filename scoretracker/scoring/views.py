@@ -4,6 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from .models import Team, ScoreLog, Game, GameResult, SpecialAward, Contestant
 from django.db.models import Q
+import json
 
 # Simple password - change this to whatever you want
 ADMIN_PASSWORD = "ZRC2026!intramsnibright"
@@ -394,6 +395,7 @@ def mrmspisay_showcase(request):
             'name': contestant.name,
             'empire': contestant.empire,
             'photo_url': contestant.photo.url if contestant.photo else '',
+            'video_url': contestant.advocacy_video.url if contestant.advocacy_video else '',
         })
     
-    return render(request, 'mrmspisay.html', {'contestants': contestants_data})
+    return render(request, 'mrmspisay.html', {'contestants': json.dumps(contestants_data)})

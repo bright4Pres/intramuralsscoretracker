@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from cloudinary.models import CloudinaryField
 
 
 class Game(models.Model):
@@ -167,7 +168,8 @@ class Contestant(models.Model):
     """Model for Mr. & Ms. Pisay contestants."""
     name = models.CharField(max_length=100)
     empire = models.CharField(max_length=20, choices=Team.TEAM_CHOICES)
-    photo = models.ImageField(upload_to='contestants/', blank=True, null=True)
+    photo = CloudinaryField('image', blank=True, null=True)
+    advocacy_video = CloudinaryField('video', resource_type='video', blank=True, null=True)
     order = models.IntegerField(default=0)  # For ordering in the carousel
     is_active = models.BooleanField(default=True)
     
