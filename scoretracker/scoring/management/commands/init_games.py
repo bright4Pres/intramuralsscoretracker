@@ -57,9 +57,9 @@ class Command(BaseCommand):
                 'points_dq': 5,
             })
         
-        # Mr. and Ms. Pisay - Special case
+        # Mr. Pisay and Miss Pisay - Separate events, 20 points each
         games_data.append({
-            'name': 'Mr. and Ms. Pisay',
+            'name': 'Mr. Pisay',
             'category': 'major',
             'type': 'litmus',
             'points_1st': 20,
@@ -67,7 +67,19 @@ class Command(BaseCommand):
             'points_3rd': 12,
             'points_4th': 8,
             'points_dq': 5,
-            'notes': '4 special awards: 5 points per award'
+            'notes': 'Special awards: 5 points per award'
+        })
+        
+        games_data.append({
+            'name': 'Miss Pisay',
+            'category': 'major',
+            'type': 'litmus',
+            'points_1st': 20,
+            'points_2nd': 16,
+            'points_3rd': 12,
+            'points_4th': 8,
+            'points_dq': 5,
+            'notes': 'Special awards: 5 points per award'
         })
         
         # LITMUS - Minor Events
@@ -96,7 +108,6 @@ class Command(BaseCommand):
             "Volleyball Men's",
             "Volleyball Women's",
             "Basketball Men's",
-            'Track and Field Relay',
         ]
         
         for game in sports_major:
@@ -118,7 +129,6 @@ class Command(BaseCommand):
             "Pickleball Double's Men's Faculty",
             "Pickleball Double's Women's Student",
             "Pickleball Double's Men's Student",
-            "Pickleball Double's Women's Faculty",  # Listed twice in original
             "Pickleball Mixed Double's",
             "Badminton Singles Women's",
             "Badminton Singles Men's",
@@ -129,7 +139,10 @@ class Command(BaseCommand):
             'Mobile Legends',
             'Call of Duty Mobile',
             'Valorant',
-            'Chess',
+            "Chess Standard Men's",
+            "Chess Blitz Men's",
+            "Chess Standard Women's",
+            "Chess Blitz Women's",
             "Track and Field 100m Women's",
             "Track and Field 100m Men's",
             "Track and Field 400m Women's",
