@@ -551,30 +551,10 @@
             {% endfor %}
         };
         
-        // Update points preview when game or placement changes
-        function updatePointsPreview() {
-            const gameSelect = document.getElementById('game');
-            const placementSelect = document.getElementById('placement');
-            const previewDiv = document.getElementById('points-preview');
-            const pointsAmount = document.getElementById('points-amount');
-            
-            const gameId = gameSelect.value;
-            const placement = placementSelect.value;
-            
-            if (gameId && placement && gamePointsData[gameId]) {
-                const points = gamePointsData[gameId].points[placement];
-                pointsAmount.textContent = points;
-                previewDiv.style.display = 'block';
-            } else {
-                previewDiv.style.display = 'none';
-            }
-        }
-        
-        document.getElementById('game').addEventListener('change', updatePointsPreview);
-        document.getElementById('placement').addEventListener('change', updatePointsPreview);
-        
         // Leaderboard management
-        document.getElementById('leaderboard-game').addEventListener('change', function() {
+        const leaderboardGameSelect = document.getElementById('leaderboard-game');
+        if (leaderboardGameSelect) {
+            leaderboardGameSelect.addEventListener('change', function() {
             const placementsDiv = document.getElementById('leaderboard-placements');
             if (this.value) {
                 placementsDiv.style.display = 'block';
@@ -582,10 +562,13 @@
             } else {
                 placementsDiv.style.display = 'none';
             }
-        });
+            });
+        }
         
         // Add change listeners to all placement selects to validate duplicates
         ['leaderboard-1st', 'leaderboard-2nd', 'leaderboard-3rd', 'leaderboard-4th'].forEach(selectId => {
+            const el = document.getElementById(selectId);
+            if (!el) return;
             document.getElementById(selectId).addEventListener('change', validatePlacementSelections);
         });
         
@@ -753,51 +736,6 @@
                 console.error('Error:', error);
             });
         }
-        
-        // Add game result form submission
-        document.getElementById('add-game-result-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const messageEl = document.getElementById('game-message');
-            
-            fetch('/api/add-game-result/', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    messageEl.textContent = data.message;
-                    messageEl.className = 'message success';
-                    messageEl.style.display = 'block';
-                    updateScores();
-                    
-                    // Reset form
-                    document.getElementById('game').value = '';
-                    document.getElementById('result-team').value = '';
-                    document.getElementById('placement').value = '';
-                    document.getElementById('points-preview').style.display = 'none';
-                } else {
-                    messageEl.textContent = data.message || 'Error adding result';
-                    messageEl.className = 'message error';
-                    messageEl.style.display = 'block';
-                }
-                
-                setTimeout(() => {
-                    messageEl.style.display = 'none';
-                }, 3000);
-            })
-            .catch(error => {
-                messageEl.textContent = 'Network error. Please try again.';
-                messageEl.className = 'message error';
-                messageEl.style.display = 'block';
-                console.error('Error:', error);
-            });
-        });
         
         // Toggle reason field based on points value
         function toggleReasonField() {
