@@ -112,6 +112,36 @@ class GameResult(models.Model):
                 team_score=self.placement,
                 reason=f"Placement: {self.get_placement_display()}"
             )
+    
+    def delete(self, *args, **kwargs):
+        """Refund points when deleting a game result."""
+        # Calculate points to refund based on placement
+        points_map = {
+            1: self.game.points_1st,
+            2: self.game.points_2nd,
+            3: self.game.points_3rd,
+            4: self.game.points_4th,
+            5: self.game.points_dq,
+        }
+        points = points_map.get(self.placement, 0)
+        
+        # Refund team points
+        if points != 0:
+            team = Team.objects.get(name=self.team)
+            team.points -= points
+            team.save()
+            
+            # Create score log for refund
+            ScoreLog.objects.create(
+                team=self.team,
+                points=-points,
+                event=self.game.name,
+                opponent='All',
+                team_score=self.placement,
+                reason=f"Refund: {self.get_placement_display()} cleared"
+            )
+        
+        super().delete(*args, **kwargs)
 
 
 class ScoreLog(models.Model):
@@ -151,28 +181,38 @@ class SpecialAward(models.Model):
     
     def save(self, *args, **kwargs):
         """Auto-update team points when awarding."""
-        # Check if this is an update and team has changed
-        if self.pk:
-            old_award = SpecialAward.objects.get(pk=self.pk)
-            # Remove points from old team if it existed
-            if old_award.team and old_award.team != self.team:
-                old_team = Team.objects.get(name=old_award.team)
-                old_team.points -= old_award.points
-                old_team.save()
+        is_new = self.pk is None
+        old_team = None
+        
+        # Check if this is an update and get the old team
+        if not is_new:
+            try:
+                old_award = SpecialAward.objects.get(pk=self.pk)
+                old_team = old_award.team
+            except SpecialAward.DoesNotExist:
+                pass
         
         super().save(*args, **kwargs)
         
-        # Add points to new team
-        if self.team:
-            team = Team.objects.get(name=self.team)
-            team.points += self.points
-            team.save()
+        # Only update points if the team actually changed
+        if old_team != self.team:
+            # Remove points from old team if it existed
+            if old_team:
+                old_team_obj = Team.objects.get(name=old_team)
+                old_team_obj.points -= self.points
+                old_team_obj.save()
             
-            # Create score log
-            ScoreLog.objects.create(
-                team=self.team,
-                points=self.points,
-                event=f"{self.game.name} - {self.award_name}",
-                opponent='All',
-                reason="Special Award"
-            )
+            # Add points to new team if it exists
+            if self.team:
+                new_team_obj = Team.objects.get(name=self.team)
+                new_team_obj.points += self.points
+                new_team_obj.save()
+                
+                # Create score log
+                ScoreLog.objects.create(
+                    team=self.team,
+                    points=self.points,
+                    event=f"{self.game.name} - {self.award_name}",
+                    opponent='All',
+                    reason="Special Award"
+                )
