@@ -3,9 +3,9 @@
 A real-time scoreboard application for tracking intramural competition scores across four teams.
 
 ## Teams
-- **Shinobi** (Purple)
-- **Pegasus** (Blue)
-- **Chimera** (Red)
+- **Shinobi** (Red)
+- **Pegasus** (Yellow)
+- **Chimera** (Purple)
 - **Phoenix** (Orange)
 
 ## Setup
@@ -62,12 +62,3 @@ ADMIN_PASSWORD = "your_new_password_here"
 - `GET /api/scores/` - Get current scores for all teams
 - `POST /api/add-points/` - Add points to a team
 - `POST /api/reset-scores/` - Reset all scores to 0
-
-## Features
-
-- ✅ Real-time score updates without page refresh
-- ✅ Password-protected admin dashboard
-- ✅ SQLite database for score persistence
-- ✅ Responsive design
-- ✅ Animated score changes
-- ✅ Session-based authentication

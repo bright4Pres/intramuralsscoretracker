@@ -15,17 +15,19 @@ This project uses Cloudinary to store contestant photos and advocacy videos.
      - API Key
      - API Secret
 
-3. **Update settings.py**
-   - Open `scoretracker/scoretracker/settings.py`
-   - Find the `CLOUDINARY_STORAGE` section (around line 135)
-   - Replace the placeholder values:
-     ```python
-     CLOUDINARY_STORAGE = {
-         'CLOUD_NAME': 'your_cloud_name',  # Replace with your actual cloud name
-         'API_KEY': 'your_api_key',        # Replace with your actual API key
-         'API_SECRET': 'your_api_secret',  # Replace with your actual API secret
-     }
+3. **Create .env File**
+   - Navigate to `scoretracker/scoretracker/` directory
+   - Copy `.env.example` to `.env`:
+     ```bash
+     cp .env.example .env
      ```
+   - Open the `.env` file and add your Cloudinary credentials:
+     ```
+     CLOUDINARY_CLOUD_NAME=your_actual_cloud_name
+     CLOUDINARY_API_KEY=your_actual_api_key
+     CLOUDINARY_API_SECRET=your_actual_api_secret
+     ```
+   - **Important**: Never commit the `.env` file to git! It's already in `.gitignore`
 
 4. **Test the Setup**
    - Go to the Django admin panel: http://localhost:8080/admin/
