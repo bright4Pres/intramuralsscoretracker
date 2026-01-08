@@ -956,17 +956,20 @@
         }
         
         // Special Awards Management
-        document.getElementById('award-game').addEventListener('change', function() {
-            const gameId = this.value;
-            const awardsSection = document.getElementById('awards-section');
-            
-            if (gameId) {
-                awardsSection.style.display = 'block';
-                loadCurrentAwards(gameId);
-            } else {
-                awardsSection.style.display = 'none';
-            }
-        });
+        const awardGameSelect = document.getElementById('award-game');
+        if (awardGameSelect) {
+            awardGameSelect.addEventListener('change', function() {
+                const gameId = this.value;
+                const awardsSection = document.getElementById('awards-section');
+                
+                if (gameId) {
+                    awardsSection.style.display = 'block';
+                    loadCurrentAwards(gameId);
+                } else {
+                    awardsSection.style.display = 'none';
+                }
+            });
+        }
         
         function loadCurrentAwards(gameId) {
             fetch(`/api/special-awards/${gameId}/`)
