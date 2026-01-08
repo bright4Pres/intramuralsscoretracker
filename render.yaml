@@ -5,7 +5,7 @@ services:
     plan: free
     branch: main
     buildCommand: "./build.sh"
-    startCommand: "gunicorn scoretracker.scoretracker.wsgi:application"
+    startCommand: "cd scoretracker && gunicorn scoretracker.wsgi:application"
     envVars:
       - key: SECRET_KEY
         generateValue: true
@@ -19,4 +19,10 @@ services:
         value: "628443394577536"
       - key: CLOUDINARY_API_SECRET
         value: IPwWMyr8WCX8WsJg8FHE_rmvjJ8
+      - key: DJANGO_SUPERUSER_USERNAME
+        value: admin
+      - key: DJANGO_SUPERUSER_EMAIL
+        value: admin@example.com
+      - key: DJANGO_SUPERUSER_PASSWORD
+        value: YourSecurePassword123!
     autoDeploy: true
