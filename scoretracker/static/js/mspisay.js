@@ -2,15 +2,12 @@
 const NEXT = 1;
 const PREV = -1;
 
-// Slide titles array (global)
-const slideTitles = [
-  "Cosmic Harmony",
-  "Astral Journey",
-  "Ethereal Vision",
-  "Quantum Field",
-  "Celestial Path",
-  "Cosmic Whisper"
-];
+// Slide titles array (global) - use contestant names from Django
+const slideTitles = contestantNames.map(c => c.name) || [];
+
+// Empire data from Django
+const empireNames = typeof contestantEmpires !== 'undefined' ? contestantEmpires : [];
+const empireColorMap = typeof empireColors !== 'undefined' ? empireColors : {};
 
 // Global variable to track currently hovered thumbnail
 let currentHoveredThumb = null;
@@ -75,6 +72,24 @@ function updateSlideTitle(index) {
   setTimeout(() => {
     currentTitle.remove();
   }, 500);
+}
+
+function updateEmpireSection(index) {
+  const empireSection = document.getElementById("empire-section");
+  if (!empireSection) return;
+
+  const empireName = empireNames[index] || "COSMIC SERIES";
+  const empireKey = Object.keys(empireColorMap).find(key => 
+    empireColorMap[key] && empireName.toLowerCase().includes(key.toLowerCase())
+  );
+  const empireColor = empireKey ? empireColorMap[empireKey] : "#ffffff";
+
+  // Update text
+  empireSection.textContent = empireName.toUpperCase();
+  
+  // Update color with smooth transition
+  empireSection.style.transition = "color 0.5s ease";
+  empireSection.style.color = empireColor;
 }
 
 // Updated updateDragLines function for continuous lines
@@ -212,6 +227,7 @@ class Slideshow {
     // Update counter and title
     updateSlideCounter(index);
     updateSlideTitle(index);
+    updateEmpireSection(index);
 
     // Show drag lines for active thumbnail
     updateDragLines(index, true);
@@ -359,6 +375,7 @@ class Slideshow {
     // Update counter and title
     updateSlideCounter(this.current);
     updateSlideTitle(this.current);
+    updateEmpireSection(this.current);
 
     // Highlight active thumbnail in drag line indicator
     updateDragLines(this.current, true);
@@ -567,6 +584,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize counters and lines
   updateSlideCounter(0);
+  updateEmpireSection(0);
   updateDragLines(0, true); // Initialize the first thumbnail's lines
 
   // Add global mouse leave handler for the entire thumbnails area

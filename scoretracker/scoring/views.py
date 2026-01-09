@@ -402,4 +402,7 @@ def mrmspisay_showcase(request):
             'video_url': contestant.advocacy_video.url if contestant.advocacy_video else '',
         })
     
-    return render(request, 'mrmspisay.html', {'contestants': json.dumps(contestants_data)})
+    return render(request, 'mrmspisay.html', {
+        'contestants': contestants,
+        'contestant_names_json': json.dumps(contestants_data)
+    })
