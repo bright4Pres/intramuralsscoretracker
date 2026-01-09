@@ -6,24 +6,34 @@ pip install -r requirements.txt
 
 cd scoretracker
 
-echo "Starting Django setup..."
-echo "DATABASE_URL is: $DATABASE_URL"
-
+echo "=========================================="
+echo "About to run collectstatic..."
+echo "=========================================="
 python manage.py collectstatic --no-input
-echo "Collectstatic completed"
 
-python manage.py migrate
-echo "Migration completed"
+echo "=========================================="
+echo "About to run migrations..."
+echo "=========================================="
+python manage.py migrate --verbosity 2
 
+echo "=========================================="
+echo "About to initialize teams..."
+echo "=========================================="
 python manage.py init_teams
-echo "Init teams completed"
 
+echo "=========================================="
+echo "About to initialize games..."
+echo "=========================================="
 python manage.py init_games
-echo "Init games completed"
 
 # Create superuser if it doesn't exist
 if [ "$DJANGO_SUPERUSER_USERNAME" ] && [ "$DJANGO_SUPERUSER_PASSWORD" ] ; then
+    echo "=========================================="
+    echo "About to create superuser..."
+    echo "=========================================="
     python manage.py createsuperuser --noinput || echo "Superuser already exists"
 fi
 
-echo "Build script completed successfully"
+echo "=========================================="
+echo "Build script completed successfully!"
+echo "=========================================="
