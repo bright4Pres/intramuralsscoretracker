@@ -1,0 +1,291 @@
+function $(selectors) {
+    return document.querySelector(selectors)
+}
+
+function $$(selectors) {
+    return Array.from(document.querySelectorAll(selectors))
+}
+
+function getElements(teamList) {
+    const marqueeText = $('.marquee__text')
+
+    const teams = teamList.reduce((teams, team) => {
+        teams[team.name] = $(`.points__team--${team.name}`)
+        return teams
+    }, {})
+
+    return {
+        marqueeText,
+        teams,
+    }
+}
+
+class Main {
+    elements = {}
+    teamList = []
+    teamMap = {}
+    winner = null
+    lastScores = {}
+
+    constructor(teamMap) {
+        console.debug('constructor', teamMap)
+
+        this.teamMap = teamMap ?? {}
+        this.teamList = Object.values(this.teamMap)
+        this.elements = getElements(this.teamList)
+        
+        // Store initial scores
+        this.teamList.forEach(team => {
+            this.lastScores[team.name] = team.points
+        })
+        
+        // Start polling for score updates
+        this.startPolling()
+    }
+
+    startPolling() {
+        // Poll every 2 seconds for score updates
+        setInterval(() => {
+            this.fetchScores()
+        }, 2000)
+    }
+
+    async fetchScores() {
+        try {
+            const response = await fetch('/api/scores/')
+            const teams = await response.json()
+            
+            // Sort teams by points (highest to lowest)
+            const sortedTeams = teams.sort((a, b) => b.points - a.points)
+            
+            // Process all teams in parallel with their own animations
+            sortedTeams.forEach(team => {
+                const oldScore = this.lastScores[team.name]
+                const newScore = team.points
+                
+                if (newScore > oldScore) {
+                    // Score increased - animate
+                    const pointsScored = newScore - oldScore
+                    this.teamMap[team.name].points = newScore
+                    this.lastScores[team.name] = newScore
+                    this.animateIndependent(this.teamMap[team.name], pointsScored)
+                } else if (newScore !== oldScore) {
+                    // Score changed but didn't increase (reset or decrease)
+                    this.animateScoreChange(team.name, oldScore, newScore)
+                    this.teamMap[team.name].points = newScore
+                    this.lastScores[team.name] = newScore
+                }
+            })
+        } catch (error) {
+            console.error('Error fetching scores:', error)
+        }
+    }
+
+    animateScoreChange(teamName, fromScore, toScore) {
+        const element = this.elements.teams[teamName]
+        const duration = 1200 // milliseconds
+        const startTime = performance.now()
+        const difference = toScore - fromScore
+        
+        const updateScore = (currentTime) => {
+            const elapsed = currentTime - startTime
+            const progress = Math.min(elapsed / duration, 1)
+            
+            // Easing function for smooth animation
+            const easeOutQuad = progress * (2 - progress)
+            const currentScore = Math.round(fromScore + (difference * easeOutQuad))
+            
+            element.textContent = currentScore
+            
+            if (progress < 1) {
+                requestAnimationFrame(updateScore)
+            } else {
+                element.textContent = toScore
+            }
+        }
+        
+        requestAnimationFrame(updateScore)
+    }
+
+    animateIndependent(team, pointsScored) {
+        console.debug('update', team, pointsScored)
+
+        // Get the score element
+        const element = this.elements.teams[team.name]
+        const fromScore = team.points - pointsScored
+        const toScore = team.points
+        
+        // Save the original score
+        const originalScore = element.textContent
+        
+        // Show the scored message
+        const teamDisplayName = team.name.charAt(0).toUpperCase() + team.name.slice(1)
+        element.textContent = `SCORED ${pointsScored}`
+        
+        // Add goal class for animation
+        const quadrant = $(`.points__quadrant--${team.name}`)
+        quadrant.classList.add('goal', `goal--${team.name}`)
+        
+        // Small confetti burst from the quadrant
+        const rect = quadrant.getBoundingClientRect()
+        const x = (rect.left + rect.width / 2) / window.innerWidth
+        const y = (rect.top + rect.height / 2) / window.innerHeight
+        
+        confetti({
+            particleCount: 30,
+            spread: 60,
+            origin: { x, y },
+            colors: ['#FFFFFF', team.colorAsHex, team.colorAsHex],
+            scalar: 1.2,
+            startVelocity: 25
+        })
+        
+        // After 1.5 seconds, animate counting to the actual score
+        setTimeout(() => {
+            quadrant.classList.remove('goal', `goal--${team.name}`)
+            
+            const duration = 800
+            const startTime = performance.now()
+            
+            const updateScore = (currentTime) => {
+                const elapsed = currentTime - startTime
+                const progress = Math.min(elapsed / duration, 1)
+                
+                const easeOutQuad = progress * (2 - progress)
+                const currentScore = Math.round(fromScore + (pointsScored * easeOutQuad))
+                
+                    element.textContent = currentScore
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateScore)
+                } else {
+                    element.textContent = toScore
+                }
+            }
+            
+            requestAnimationFrame(updateScore)
+        }, 1500)
+    }
+
+    async animate(team, pointsScored) {
+        console.debug('update', team, pointsScored)
+
+        // Expand the scoring team's quadrant
+        const quadrant = $(`.points__quadrant--${team.name}`)
+        quadrant.classList.add('expanded')
+        quadrant.style.backgroundColor = team.colorAsHex
+
+        // Set marquee text and shadow color
+        const marqueeText = $('.marquee__text')
+        const teamDisplayName = team.name.charAt(0).toUpperCase() + team.name.slice(1)
+        marqueeText.textContent = `${teamDisplayName} scored ${pointsScored} point${pointsScored !== 1 ? 's' : ''}!`
+        marqueeText.style.color = 'white'
+        marqueeText.style.textShadow = `0 0 20px ${team.colorAsHex}, 0 0 40px ${team.colorAsHex}, 0 0 60px ${team.colorAsHex}, 0 4px 8px rgba(0,0,0,0.8)`
+
+        const random = (min, max) => {
+            min = Math.ceil(min)
+            max = Math.floor(max)
+            return Math.floor(Math.random() * (max - min + 1) + min)
+        }
+
+        const shoot = (angle, scalar) => {
+            confetti({
+                particleCount: random(5, 10),
+                angle: random(angle - 5, angle + 5),
+                spread: random(35, 55),
+                startVelocity: random(35, 55),
+                colors: ['#FFFFFF', team.colorAsHex, team.colorAsHex],
+                scalar,
+            })
+        }
+
+        for (let index = 0; index < 9; index++) {
+            setTimeout(shoot, random(0, 200), index * 22.5, random(28, 32) / 10)
+
+            setTimeout(
+                shoot,
+                random(100, 300),
+                index * 22.5,
+                random(18, 22) / 10,
+            )
+        }
+
+        document.documentElement.classList.add('goal', `goal--${team.name}`)
+
+        if (team.points === 10) {
+            document.documentElement.classList.add('win', `win--${team.name}`)
+        }
+
+        // Animate the score counting up
+        const element = this.elements.teams[team.name]
+        const fromScore = team.points - pointsScored
+        const toScore = team.points
+        const duration = 800 // milliseconds
+        const startTime = performance.now()
+        
+        const updateScore = (currentTime) => {
+            const elapsed = currentTime - startTime
+            const progress = Math.min(elapsed / duration, 1)
+            
+            // Easing function for smooth animation
+            const easeOutQuad = progress * (2 - progress)
+            const currentScore = Math.round(fromScore + (pointsScored * easeOutQuad))
+            
+            element.textContent = currentScore
+            
+            if (progress < 1) {
+                requestAnimationFrame(updateScore)
+            } else {
+                element.textContent = toScore
+            }
+        }
+        
+        setTimeout(() => {
+            requestAnimationFrame(updateScore)
+        }, 150)
+
+        await new Promise((resolve) => {
+            this.elements.marqueeText.addEventListener('animationend', resolve, { once: true })
+        })
+
+        // Remove expansion and reset background
+        quadrant.classList.remove('expanded')
+        quadrant.style.backgroundColor = ''
+
+        document.documentElement.classList.remove('goal', `goal--${team.name}`)
+    }
+}
+
+// Initialize with team data from the database
+async function initializeApp() {
+    try {
+        const response = await fetch('/api/scores/')
+        const teams = await response.json()
+        
+        const teamMap = {}
+        teams.forEach(team => {
+            teamMap[team.name] = {
+                name: team.name,
+                points: team.points,
+                colorAsHex: team.color
+            }
+        })
+        
+        const main = new Main(teamMap)
+        window.main = main // Make it globally accessible
+    } catch (error) {
+        console.error('Error initializing app:', error)
+        // Fallback to default team map if API fails
+        const defaultTeamMap = {
+            shinobi: { name: 'shinobi', points: 0, colorAsHex: '#8B4789' },
+            pegasus: { name: 'pegasus', points: 0, colorAsHex: '#3498DB' },
+            chimera: { name: 'chimera', points: 0, colorAsHex: '#E74C3C' },
+            phoenix: { name: 'phoenix', points: 0, colorAsHex: '#F39C12' }
+        }
+        const main = new Main(defaultTeamMap)
+        window.main = main
+    }
+}
+
+// Start the app
+initializeApp()

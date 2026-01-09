@@ -1,0 +1,670 @@
+:root {
+    --color-score: 255 255 255;
+    --color-team-shinobi: 220 38 38;
+    --color-team-pegasus: 250 204 21;
+    --color-team-chimera: 30 27 75;
+    --color-team-phoenix: 249 115 22;
+}
+
+@keyframes marquee {
+    0% {
+        text-shadow: 0 0 0 rgba(255, 255, 255, 0), 0 0 0 rgb(255 255 255 / 0);
+        transform: translate(0, -100%) rotate(5deg);
+    }
+
+    25% {
+        text-shadow: 0 0.1em 0 rgb(var(--color-score) / 0.75), 0 0.2em 0 rgb(var(--color-score) / 0.5);
+        transform: translate(0, 100%) rotate(-5deg);
+    }
+
+    50% {
+        text-shadow: 0 -0.1em 0 rgb(var(--color-score) / 0.75), 0 -0.2em 0 rgb(var(--color-score) / 0.5);
+        transform: translate(0, 0) rotate(5deg);
+    }
+
+    75% {
+        text-shadow: 0 0.1em 0 rgb(var(--color-score) / 0.75), 0 0.2em 0 rgb(var(--color-score) / 0.5);
+        transform: translate(0, 100%) rotate(-5deg);
+    }
+
+    100% {
+        text-shadow: 0 0 0 rgb(255 255 255 / 0), 0 0 0 rgb(255 255 255 / 0);
+        transform: translate(0, -100%) rotate(5deg);
+    }
+}
+
+@keyframes increment {
+    0% {
+        transform: scale3d(1, 1, 1);
+    }
+
+    10%,
+    20% { /* 150ms */
+        transform: scale3d(0.9, 0.9, 0.9) rotate3d(0, 0, 1, -3deg);
+    }
+
+    30%, /* 225ms */
+    50%,
+    70%,
+    90% {
+        transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, 3deg);
+    }
+
+    40%,
+    60%,
+    80% {
+        transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, -3deg);
+    }
+
+    100% { /* 750ms */
+        transform: scale3d(1, 1, 1);
+    }
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    flex-grow: 1;
+    margin: 0;
+}
+
+html {
+    background-color: rgb(0 0 0);
+    color: rgb(255 255 255);
+    display: flex;
+    font-family: 'Black Ops One', cursive, system-ui;
+    font-size: 100%;
+    min-height: 100%;
+}
+
+main {
+    cursor: default;
+    display: flex;
+    flex-grow: 1;
+}
+
+.idle {
+    cursor: none;
+}
+
+.marquee {
+    position: fixed;
+    top: 20px;
+    right: 0;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    font-size: min(6vw, 10vh);
+    font-weight: 700;
+    width: auto;
+    z-index: 2000;
+    text-align: center;
+    padding: 20px;
+}
+
+.marquee__text {
+    animation-direction: normal;
+    animation-duration: 3s;
+    animation-fill-mode: both;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-out;
+    opacity: 0;
+    transform: translateY(-50px);
+    text-shadow: 0 0 20px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.6);
+    font-family: 'Black Ops One', cursive, system-ui;
+    letter-spacing: 0.05em;
+}
+
+.goal .marquee__text {
+    animation-name: marquee;
+}
+
+@keyframes marquee {
+    0% {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.8);
+    }
+    
+    15% {
+        opacity: 1;
+        transform: translateY(0) scale(1.1);
+    }
+    
+    85% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    
+    100% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.9);
+    }
+}
+
+.points {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: 1fr;
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+}
+
+.points__quadrant {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.5s ease;
+    z-index: 1;
+}
+
+.points__quadrant.expanded {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
+    border: none;
+}
+
+.points__quadrant.expanded::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: -1;
+}
+
+.points__quadrant--shinobi {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.points__quadrant--shinobi::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/static/img/shinobi.png');
+    background-position: center;
+    filter: brightness(0.7);
+    z-index: -1;
+}
+
+.points__quadrant--pegasus {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.points__quadrant--pegasus::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/static/img/pegasus.png');
+    background-position: center;
+    filter: brightness(0.7);
+    z-index: -1;
+}
+
+.points__quadrant--chimera {
+    grid-column: 3;
+    grid-row: 1;
+}
+
+.points__quadrant--chimera::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/static/img/chimera.png');
+    background-position: center;
+    filter: brightness(0.7);
+    z-index: -1;
+}
+
+.points__quadrant--phoenix {
+    grid-column: 4;
+    grid-row: 1;
+}
+
+.points__quadrant--phoenix::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/static/img/phoenix.png');
+    background-position: center;
+    filter: brightness(0.7);
+    z-index: -1;
+}
+
+.points__quadrant--chimera .points__team,
+.points__quadrant--chimera .points__label {
+    color: white;
+}
+
+.points__label {
+    font-size: min(5vw, 8vh);
+    font-weight: 600;
+    margin-top: 2vh;
+    opacity: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.points__team,
+.points__versus {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.points__team {
+    position: relative;
+    animation-delay: 0;
+    animation-direction: normal;
+    animation-duration: 750ms;
+    animation-fill-mode: both;
+    animation-iteration-count: 1;
+    animation-timing-function: linear;
+    font-size: clamp(1.8rem, 15vw, 10rem);
+    text-shadow: 0 0 32px rgb(0 0 0), 0 0 96px rgb(0 0 0);
+    transition-delay: 150ms;
+    transition-duration: 50ms;
+    transition-property: color, text-shadow, font-size;
+    z-index: 300;
+    width: 100%;
+    max-width: 450px;
+    min-width: 200px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    text-overflow: clip;
+    white-space: nowrap;
+}
+
+/* Smaller font size when showing "SCORED X" message */
+.goal .points__team {
+    font-size: clamp(0.6rem, 2.8vw, 2rem);
+    white-space: normal;
+    word-wrap: break-word;
+    line-height: 1.2;
+}
+
+.points__versus {
+    color: rgb(255 255 255 / 0.8);
+    font-size: min(10vw, 20vh);
+    font-weight: 100;
+    z-index: 400;
+}
+
+.goal--shinobi {
+    --color-score: var(--color-team-shinobi);
+}
+
+.goal--pegasus {
+    --color-score: var(--color-team-pegasus);
+}
+
+.goal--chimera {
+    --color-score: var(white);
+}
+
+.goal--phoenix {
+    --color-score: var(--color-team-phoenix);
+}
+
+/* Pulsing glow effect when team scores */
+.points__quadrant.goal--shinobi {
+    animation: glow-shinobi 0.5s ease-in-out 3;
+}
+
+.points__quadrant.goal--pegasus {
+    animation: glow-pegasus 0.5s ease-in-out 3;
+}
+
+.points__quadrant.goal--chimera {
+    animation: glow-chimera 0.5s ease-in-out 3;
+}
+
+.points__quadrant.goal--phoenix {
+    animation: glow-phoenix 0.5s ease-in-out 3;
+}
+
+@keyframes glow-shinobi {
+    0%, 100% { box-shadow: inset 0 0 0 rgba(220, 38, 38, 0); }
+    50% { box-shadow: inset 0 0 60px rgba(220, 38, 38, 0.6); }
+}
+
+@keyframes glow-pegasus {
+    0%, 100% { box-shadow: inset 0 0 0 rgba(250, 204, 21, 0); }
+    50% { box-shadow: inset 0 0 60px rgba(250, 204, 21, 0.6); }
+}
+
+@keyframes glow-chimera {
+    0%, 100% { box-shadow: inset 0 0 0 rgba(30, 27, 75, 0); }
+    50% { box-shadow: inset 0 0 60px rgba(30, 27, 75, 0.8); }
+}
+
+@keyframes glow-phoenix {
+    0%, 100% { box-shadow: inset 0 0 0 rgba(249, 115, 22, 0); }
+    50% { box-shadow: inset 0 0 60px rgba(249, 115, 22, 0.6); }
+}
+
+.points__team--shinobi {
+    color: rgb(var(--color-team-shinobi));
+}
+
+.points__team--pegasus {
+    color: rgb(var(--color-team-pegasus));
+}
+
+.points__team--chimera {
+    color: rgb(var(--color-team-chimera));
+}
+
+.points__team--phoenix {
+    color: rgb(var(--color-team-phoenix));
+}
+
+.goal--shinobi .points__team--shinobi,
+.goal--pegasus .points__team--pegasus,
+.goal--chimera .points__team--chimera,
+.goal--phoenix .points__team--phoenix {
+    animation-name: increment;
+}
+
+.win--shinobi .points__quadrant--shinobi {
+    background-color: rgb(var(--color-team-shinobi));
+}
+
+.win--shinobi .points__team--shinobi {
+    color: rgb(255 255 255);
+    text-shadow: 0 0 32px rgb(255 255 255 / 0.2), 0 0 96px rgb(255 255 255 / 0.2);
+}
+
+.win--pegasus .points__quadrant--pegasus {
+    background-color: rgb(var(--color-team-pegasus));
+}
+
+.win--pegasus .points__team--pegasus {
+    color: rgb(255 255 255);
+    text-shadow: 0 0 32px rgb(255 255 255 / 0.2), 0 0 96px rgb(255 255 255 / 0.2);
+}
+
+.win--chimera .points__quadrant--chimera {
+    background-color: rgb(var(--color-team-chimera));
+}
+
+.win--chimera .points__team--chimera {
+    color: rgb(255 255 255);
+    text-shadow: 0 0 32px rgb(255 255 255 / 0.2), 0 0 96px rgb(255 255 255 / 0.2);
+}
+
+.win--phoenix .points__quadrant--phoenix {
+    background-color: rgb(var(--color-team-phoenix));
+}
+
+.win--phoenix .points__team--phoenix {
+    color: rgb(255 255 255);
+    text-shadow: 0 0 32px rgb(255 255 255 / 0.2), 0 0 96px rgb(255 255 255 / 0.2);
+}
+
+.tools {
+    position: absolute;
+    right: 19%;
+    bottom: 10px;
+    left: 19%;
+    display: flex;
+    gap: 10px;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    width: auto;
+    z-index: 400;
+}
+
+.tools__button {
+    position: relative;
+    background-color: transparent;
+    border: 2px solid;
+    border-radius: 18px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 16px;
+    opacity: 0.75;
+    padding: 0;
+    text-transform: uppercase;
+    transition: opacity 100ms;
+    width: 48px;
+    height: 48px;
+}
+
+.tools__button:active {
+    top: 1px;
+}
+
+.tools__button:disabled {
+    border-style: dotted;
+    color: inherit;
+    cursor: wait;
+    opacity: 0.5;
+}
+
+.tools__button:hover:not(:disabled) {
+    opacity: 1;
+}
+
+.tools__button:nth-child(even) {
+    margin-right: auto;
+}
+
+.tools__button:nth-child(odd) {
+    margin-left: auto;
+}
+
+.tools__button--shinobi {
+    border-color: rgb(var(--color-team-shinobi));
+}
+
+.tools__button--shinobi:hover:not(:disabled) {
+    background-color: rgb(var(--color-team-shinobi) / 0.5);
+}
+
+.tools__button--pegasus {
+    border-color: rgb(var(--color-team-pegasus));
+}
+
+.tools__button--pegasus:hover:not(:disabled) {
+    background-color: rgb(var(--color-team-pegasus) / 0.5);
+}
+
+.tools__button--chimera {
+    border-color: rgb(var(--color-team-chimera));
+}
+
+.tools__button--chimera:hover:not(:disabled) {
+    background-color: rgb(var(--color-team-chimera) / 0.5);
+}
+
+.tools__button--phoenix {
+    border-color: rgb(var(--color-team-phoenix));
+}
+
+.tools__button--phoenix:hover:not(:disabled) {
+    background-color: rgb(var(--color-team-phoenix) / 0.5);
+}
+
+/* Tablet responsiveness */
+@media (max-width: 1024px) and (orientation: portrait) {
+    .points {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+    }
+    
+    .points__quadrant--shinobi {
+        grid-column: 1;
+        grid-row: 1;
+    }
+    
+    .points__quadrant--pegasus {
+        grid-column: 2;
+        grid-row: 1;
+    }
+    
+    .points__quadrant--chimera {
+        grid-column: 1;
+        grid-row: 2;
+    }
+    
+    .points__quadrant--phoenix {
+        grid-column: 2;
+        grid-row: 2;
+    }
+    
+    .points__team {
+        font-size: clamp(1.5rem, 14vw, 9rem);
+        max-width: 350px;
+        min-width: 150px;
+    }
+    
+    .goal .points__team {
+        font-size: clamp(0.55rem, 2.5vw, 1.8rem);
+    }
+    
+    .points__label {
+        font-size: min(6vw, 6vh);
+        margin-top: 1.5vh;
+    }
+    
+    .marquee {
+        font-size: min(8vw, 8vh);
+        top: 40px;
+        padding: 15px;
+    }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .points {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+    }
+    
+    .points__quadrant--shinobi {
+        grid-column: 1;
+        grid-row: 1;
+    }
+    
+    .points__quadrant--pegasus {
+        grid-column: 2;
+        grid-row: 1;
+    }
+    
+    .points__quadrant--chimera {
+        grid-column: 1;
+        grid-row: 2;
+    }
+    
+    .points__quadrant--phoenix {
+        grid-column: 2;
+        grid-row: 2;
+    }
+    
+    .points__team {
+        font-size: clamp(1.3rem, 13vw, 7rem);
+        max-width: 300px;
+        min-width: 120px;
+    }
+    
+    .goal .points__team {
+        font-size: clamp(0.5rem, 2.2vw, 1.5rem);
+    }
+    
+    .points__label {
+        font-size: min(7vw, 5vh);
+        margin-top: 1vh;
+        letter-spacing: 0.05em;
+    }
+    
+    .marquee {
+        font-size: min(10vw, 6vh);
+        top: 60px;
+        padding: 10px;
+    }
+    
+    .points__quadrant {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+    .points__team {
+        font-size: clamp(1rem, 11vw, 6rem);
+        max-width: 250px;
+        min-width: 100px;
+    }
+    
+    .goal .points__team {
+        font-size: clamp(0.45rem, 2vw, 1.3rem);
+    }
+    
+    .points__label {
+        font-size: min(8vw, 4vh);
+        margin-top: 0.5vh;
+    }
+    
+    .marquee {
+        font-size: min(12vw, 5vh);
+        top: 80px;
+        padding: 8px;
+    }
+}
+
+/* Landscape orientation for tablets/phones */
+@media (max-width: 1024px) and (orientation: landscape) {
+    .points {
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        grid-template-rows: 1fr;
+    }
+    
+    .points__team {
+        font-size: clamp(1.3rem, 10vw, 7rem);
+        max-width: 300px;
+        min-width: 100px;
+    }
+    
+    .goal .points__team {
+        font-size: clamp(0.5rem, 2.2vw, 1.5rem);
+    }
+    
+    .points__label {
+        font-size: min(4vw, 10vh);
+        margin-top: 1.5vh;
+    }
+    
+    .marquee {
+        font-size: min(6vw, 12vh);
+    }
+}

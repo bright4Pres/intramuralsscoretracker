@@ -1,965 +1,665 @@
-// Register GSAP plugins
-gsap.registerPlugin(Draggable, InertiaPlugin);
+// Direction constants
+const NEXT = 1;
+const PREV = -1;
 
-// Load contestants data from template
-const contestantsDataEl = document.getElementById('contestants-data');
-const empireColorsEl = document.getElementById('empire-colors');
-const contestantsData = contestantsDataEl ? JSON.parse(contestantsDataEl.textContent) : [];
-const empireColors = empireColorsEl ? JSON.parse(empireColorsEl.textContent) : {};
+// Slide titles array (global)
+const slideTitles = [
+  "Cosmic Harmony",
+  "Astral Journey",
+  "Ethereal Vision",
+  "Quantum Field",
+  "Celestial Path",
+  "Cosmic Whisper"
+];
 
-const CONFIG = {
-  totalCards: contestantsData.length || 8,
-  wheelRadius: 30, // 35% of viewport (matching the basic implementation)
-  contestants: contestantsData,
-  empireColors: empireColors,
-  animations: {
-    initialDuration: 1,
-    rotationDuration: 0.64,
-    flipDuration: 0.64,
-    transitionDuration: 1.2,
-    circleTransitionDuration: 0.8
+// Global variable to track currently hovered thumbnail
+let currentHoveredThumb = null;
+
+// Global variable to track mouse position over thumbnails
+let mouseOverThumbnails = false;
+let lastHoveredThumbIndex = null;
+
+// Global animation state management
+let isAnimating = false;
+let pendingNavigation = null;
+
+// Function to visually update navigation elements based on animation state
+function updateNavigationUI(disabled) {
+  // Update navigation arrows
+  const navButtons = document.querySelectorAll(".counter-nav");
+  navButtons.forEach((btn) => {
+    btn.style.opacity = disabled ? "0.3" : "";
+    btn.style.pointerEvents = disabled ? "none" : "";
+  });
+
+  // Update thumbnails
+  const thumbs = document.querySelectorAll(".slide-thumb");
+  thumbs.forEach((thumb) => {
+    thumb.style.pointerEvents = disabled ? "none" : "";
+  });
+}
+
+// Global functions for slide management
+function updateSlideCounter(index) {
+  const currentSlideEl = document.querySelector(".current-slide");
+  if (currentSlideEl) {
+    currentSlideEl.textContent = String(index + 1).padStart(2, "0");
   }
-};
-// DOM Elements
-const carouselItemsEl = document.querySelector(".carousel-items");
-const carouselContainerEl = document.querySelector(".carousel-container");
+}
 
-// State variables
-let currentAnimation = "circle";
-let isTransitioning = false;
-let activeAnimations = [];
-let draggableInstance = null;
-let originalZIndices = [];
-let cardInitialAngles = [];
-// Get viewport dimensions
-const getViewportSize = () => {
-  return {
-    width: window.innerWidth,
-    height: window.innerHeight
-  };
-};
-// Get card dimensions
-const getCardDimensions = () => {
-  return {
-    width: parseFloat(
-      getComputedStyle(document.documentElement).getPropertyValue(
-        "--card-width"
-      )
-    ),
-    height: parseFloat(
-      getComputedStyle(document.documentElement).getPropertyValue(
-        "--card-height"
-      )
-    )
-  };
-};
-// Update menu button states
-// Generate cards
-function generateCards() {
-  carouselItemsEl.innerHTML = "";
-  for (let i = 0; i < CONFIG.totalCards; i++) {
-    const contestant = CONFIG.contestants[i];
-    if (!contestant) continue;
-    
-    const cardWrapper = document.createElement("div");
-    cardWrapper.className = "card-wrapper";
-    
-    // Get empire colors
-    const empireData = CONFIG.empireColors[contestant.empire] || {};
-    const empireColor = empireData.color || '#ffffff';
-    
-    // Create card
-    const cardEl = document.createElement("div");
-    cardEl.className = "carousel-item";
-    cardEl.dataset.empire = contestant.empire;
-    
-    // Set background image
-    if (contestant.photo_url) {
-      cardEl.style.backgroundImage = `url(${contestant.photo_url})`;
-    }
-    
-    // Add empire border styling
-    cardEl.style.border = `4px solid ${empireColor}`;
-    cardEl.style.boxShadow = `0 8px 32px ${empireColor}40, inset 0 2px 8px rgba(0, 0, 0, 0.5)`;
-    
-    // Add name overlay
-    cardEl.innerHTML = `
-      <div class="card-name" style="background: linear-gradient(to top, ${empireColor}ee, transparent); color: white;">
-        ${contestant.name}
-      </div>
-    `;
-    
-    // Add click event to show video modal
-    cardEl.addEventListener('click', () => {
-      if (contestant.video_url) {
-        showVideoModal(contestant.name, contestant.empire, contestant.video_url);
+function updateSlideTitle(index) {
+  const titleContainer = document.querySelector(".slide-title-container");
+  const currentTitle = document.querySelector(".slide-title");
+  if (!titleContainer || !currentTitle) return;
+
+  // Create a new title element
+  const newTitle = document.createElement("div");
+  newTitle.className = "slide-title enter-up";
+  newTitle.textContent = slideTitles[index];
+
+  // Add it to the container
+  titleContainer.appendChild(newTitle);
+
+  // Add exit animation class to old title
+  currentTitle.classList.add("exit-up");
+
+  // Force reflow
+  void newTitle.offsetWidth;
+
+  // Start entrance animation
+  setTimeout(() => {
+    newTitle.classList.remove("enter-up");
+  }, 10);
+
+  // Remove old title after animation completes
+  setTimeout(() => {
+    currentTitle.remove();
+  }, 500);
+}
+
+// Updated updateDragLines function for continuous lines
+function updateDragLines(activeIndex, forceUpdate = false) {
+  const lines = document.querySelectorAll(".drag-line");
+  if (!lines.length) return;
+
+  // Reset all lines immediately
+  lines.forEach((line) => {
+    line.style.height = "var(--line-base-height)";
+    line.style.backgroundColor = "rgba(255, 255, 255, 0.3)";
+  });
+
+  // If no active index is provided, return
+  if (activeIndex === null) {
+    return;
+  }
+
+  const slideCount = document.querySelectorAll(".slide").length;
+  const lineCount = lines.length;
+
+  // Calculate the center position of the active thumbnail
+  const thumbWidth = 720 / slideCount; // Total width divided by number of slides
+  const centerPosition = (activeIndex + 0.5) * thumbWidth;
+
+  // Calculate the width of one line section
+  const lineWidth = 720 / lineCount;
+
+  // Apply the wave pattern to all lines based on distance from center
+  for (let i = 0; i < lineCount; i++) {
+    // Calculate the center position of this line
+    const linePosition = (i + 0.5) * lineWidth;
+
+    // Calculate distance from the center of the active thumbnail
+    const distFromCenter = Math.abs(linePosition - centerPosition);
+
+    // Calculate the maximum distance for influence (half a thumbnail width plus a bit)
+    const maxDistance = thumbWidth * 0.7;
+
+    // Only affect lines within the influence range
+    if (distFromCenter <= maxDistance) {
+      // Calculate normalized distance (0 at center, 1 at edge of influence)
+      const normalizedDist = distFromCenter / maxDistance;
+
+      // Create a cosine wave pattern (1 at center, 0 at edge)
+      const waveHeight = Math.cos((normalizedDist * Math.PI) / 2);
+
+      // Scale the height based on the wave pattern (taller in center)
+      const height =
+        parseInt(
+          getComputedStyle(document.documentElement).getPropertyValue(
+            "--line-base-height"
+          )
+        ) +
+        waveHeight * 35;
+
+      // Calculate opacity based on distance (more opaque at center)
+      const opacity = 0.3 + waveHeight * 0.4;
+
+      // Stagger the animations slightly based on distance from center
+      const delay = normalizedDist * 100;
+
+      // If forceUpdate is true, apply immediately without checking hover state
+      if (forceUpdate) {
+        lines[i].style.height = `${height}px`;
+        lines[i].style.backgroundColor = `rgba(255, 255, 255, ${opacity})`;
+      } else {
+        setTimeout(() => {
+          // Only apply if this is still the current hovered thumbnail
+          // or if we're forcing an update
+          if (
+            currentHoveredThumb === activeIndex ||
+            (mouseOverThumbnails && lastHoveredThumbIndex === activeIndex)
+          ) {
+            lines[i].style.height = `${height}px`;
+            lines[i].style.backgroundColor = `rgba(255, 255, 255, ${opacity})`;
+          }
+        }, delay);
       }
-    });
-    
-    cardWrapper.appendChild(cardEl);
-    carouselItemsEl.appendChild(cardWrapper);
-    
-    // Set z-index to ensure proper stacking
-    cardWrapper.style.zIndex = i + 1;
-  }
-  initializeZIndices();
-}
-
-// Video Modal Functions
-function showVideoModal(name, empire, videoUrl) {
-  const modal = document.getElementById('videoModal');
-  const modalContent = document.getElementById('videoModalContent');
-  const modalTitle = document.getElementById('videoModalTitle');
-  const videoPlayer = document.getElementById('videoPlayer');
-  const videoSource = document.getElementById('videoSource');
-  
-  // Set content
-  modalTitle.textContent = name;
-  videoSource.src = videoUrl;
-  videoPlayer.load();
-  
-  // Set empire styling
-  modalContent.className = 'video-modal-content ' + empire;
-  
-  // Hide carousel items
-  gsap.to('.card-wrapper', {
-    opacity: 0,
-    scale: 0.8,
-    duration: 0.4,
-    ease: 'power2.inOut'
-  });
-  
-  // Show modal
-  modal.classList.add('active');
-  
-  // Play video
-  videoPlayer.play();
-}
-
-function hideVideoModal() {
-  const modal = document.getElementById('videoModal');
-  const videoPlayer = document.getElementById('videoPlayer');
-  
-  // Pause and reset video
-  videoPlayer.pause();
-  videoPlayer.currentTime = 0;
-  
-  // Hide modal
-  modal.classList.remove('active');
-  
-  // Show carousel items again
-  gsap.to('.card-wrapper', {
-    opacity: 1,
-    scale: 1,
-    duration: 0.4,
-    ease: 'power2.inOut'
-  });
-}
-
-// Initialize z-indices
-function initializeZIndices() {
-  const cards = gsap.utils.toArray(".carousel-item");
-  originalZIndices = cards.map((card, index) => {
-    // Higher index = higher z-index value = card appears on top
-    const zIndex = 100 + (CONFIG.totalCards - index);
-    gsap.set(card, {
-      zIndex: zIndex
-    });
-    return zIndex;
-  });
-}
-// Kill active animations
-function killActiveAnimations() {
-  gsap.killTweensOf(".carousel-items");
-  gsap.killTweensOf(".carousel-item");
-  activeAnimations.forEach((animation) => {
-    if (animation && animation.kill) {
-      animation.kill();
     }
-  });
-  activeAnimations = [];
+  }
 }
-// Calculate circle positions
-function setupCirclePositions(animated = true) {
-  const cards = gsap.utils.toArray(".carousel-item");
-  const viewportSize = Math.min(window.innerWidth, window.innerHeight);
-  const radius = viewportSize * (CONFIG.wheelRadius / 100);
-  const totalAngle = 2 * Math.PI;
-  const angleStep = totalAngle / CONFIG.totalCards;
-  // Get current wheel rotation (if any)
-  const currentWheelRotation =
-    gsap.getProperty(".carousel-items", "rotation") || 0;
-  const currentWheelRotationRad = currentWheelRotation * (Math.PI / 180);
-  // Create a timeline for smooth transition
-  const timeline = gsap.timeline();
-  cards.forEach((card, i) => {
-    const angle = i * angleStep + currentWheelRotationRad;
-    const x = radius * Math.cos(angle);
-    const y = radius * Math.sin(angle);
-    if (animated) {
-      // Animated transition to circle
-      timeline.to(
-        card,
-        {
-          x: x,
-          y: y,
-          rotation: -currentWheelRotation, // Keep cards upright relative to current wheel rotation
-          scale: 0.8, // Consistent scale across patterns
-          duration: CONFIG.animations.transitionDuration,
-          ease: "power2.inOut"
+
+class Slideshow {
+  DOM = {
+    el: null,
+    slides: null,
+    slidesInner: null
+  };
+  current = 0;
+  slidesTotal = 0;
+
+  constructor(DOM_el) {
+    this.DOM.el = DOM_el;
+    this.DOM.slides = [...this.DOM.el.querySelectorAll(".slide")];
+    this.DOM.slidesInner = this.DOM.slides.map((item) =>
+      item.querySelector(".slide__img")
+    );
+    this.DOM.slides[this.current].classList.add("slide--current");
+    this.slidesTotal = this.DOM.slides.length;
+  }
+
+  next() {
+    this.navigate(NEXT);
+  }
+
+  prev() {
+    this.navigate(PREV);
+  }
+
+  // Method to navigate to a specific slide index
+  goTo(index) {
+    // If already animating, store this as pending navigation
+    if (isAnimating) {
+      pendingNavigation = { type: "goto", index };
+      return false;
+    }
+
+    // Don't navigate if it's the current slide
+    if (index === this.current) return false;
+
+    // Set animation state
+    isAnimating = true;
+    updateNavigationUI(true);
+
+    const previous = this.current;
+    this.current = index;
+
+    // Update active thumbnail
+    const thumbs = document.querySelectorAll(".slide-thumb");
+    thumbs.forEach((thumb, i) => {
+      thumb.classList.toggle("active", i === index);
+    });
+
+    // Update counter and title
+    updateSlideCounter(index);
+    updateSlideTitle(index);
+
+    // Show drag lines for active thumbnail
+    updateDragLines(index, true);
+
+    // Determine direction for the animation
+    const direction = index > previous ? 1 : -1;
+
+    // Get slides and perform animation
+    const currentSlide = this.DOM.slides[previous];
+    const currentInner = this.DOM.slidesInner[previous];
+    const upcomingSlide = this.DOM.slides[index];
+    const upcomingInner = this.DOM.slidesInner[index];
+
+    gsap
+      .timeline({
+        onStart: () => {
+          this.DOM.slides[index].classList.add("slide--current");
+          gsap.set(upcomingSlide, { zIndex: 99 });
         },
-        0
-      ); // Start all animations at the same time
-    } else {
-      // Immediate positioning (no animation)
-      gsap.set(card, {
-        x: x,
-        y: y,
-        rotation: -currentWheelRotation,
-        scale: 0.8 // Consistent scale across patterns
-      });
-    }
-  });
-  return timeline;
-}
-// Calculate and store circle data
-function calculateAndStoreCircleData() {
-  const cards = gsap.utils.toArray(".carousel-item");
-  const totalCards = cards.length;
-  const degreePerCard = 360 / totalCards;
-  const viewport = getViewportSize();
-  const minDimension = Math.min(viewport.width, viewport.height);
-  const radius = minDimension * (CONFIG.wheelRadius / 100);
-  // Reset cardInitialAngles array
-  cardInitialAngles = [];
-  // Calculate and store initial angles
-  cards.forEach((card, index) => {
-    const angle = index * degreePerCard * (Math.PI / 180);
-    cardInitialAngles[index] = angle;
-  });
-}
-// Setup draggable for rotation with enhanced inertia
-function setupDraggable(target = ".carousel-items") {
-  // Kill any existing draggable instance
-  if (draggableInstance) {
-    draggableInstance.kill();
-    draggableInstance = null;
-  }
-  // Add draggable cursor class
-  carouselItemsEl.classList.add("draggable");
-  // Create draggable with enhanced inertia settings
-  draggableInstance = Draggable.create(target, {
-    type: "rotation",
-    inertia: true,
-    throwResistance: 0.3, // Lower value for more inertia (0.3 instead of 0.5)
-    snap: function (endValue) {
-      // Optional: snap to nearest multiple of X degrees
-      // return Math.round(endValue / 15) * 15;
-      return endValue; // No snapping for fluid motion
-    },
-    onDrag: updateCardRotations,
-    onThrowUpdate: updateCardRotations,
-    onThrowComplete: function () {
-      console.log("Throw completed with velocity:", this.tween.data);
-    }
-  })[0];
-  // Add additional inertia properties
-  gsap.set(target, {
-    overwrite: "auto"
-  });
-}
-// Update card rotations to keep them facing forward
-function updateCardRotations() {
-  if (isTransitioning) return;
-  const wheelRotation = this.rotation || 0;
-  const cards = gsap.utils.toArray(".carousel-item");
-  if (currentAnimation === "circle") {
-    // For circle, keep cards upright
-    cards.forEach((card) => {
-      gsap.set(card, {
-        rotation: -wheelRotation
-      });
-    });
-  } else if (currentAnimation === "fan") {
-    // For fan, maintain the fan shape while rotating
-    const viewport = getViewportSize();
-    const maxFanAngle = Math.min(180, viewport.width / 5);
-    const fanStartAngle = -maxFanAngle / 2;
-    const fanEndAngle = maxFanAngle / 2;
-    cards.forEach((card, index) => {
-      const progress = index / (CONFIG.totalCards - 1);
-      const fanAngle = fanStartAngle + progress * (fanEndAngle - fanStartAngle);
-      // Apply fan angle + counter-rotation to maintain fan shape
-      gsap.set(card, {
-        rotation: fanAngle - wheelRotation
-      });
-    });
-  }
-}
-// Setup wave positions
-function setupWavePositions() {
-  const cards = gsap.utils.toArray(".carousel-item");
-  const viewport = getViewportSize();
-  const cardWidth = parseFloat(
-    getComputedStyle(document.documentElement).getPropertyValue("--card-width")
-  );
-  const lineWidth = Math.min(
-    viewport.width * 0.8,
-    CONFIG.totalCards * cardWidth * 0.4
-  );
-  const cardSpacing = lineWidth / (CONFIG.totalCards - 1);
-  const waveHeight = Math.min(viewport.height * 0.1, 80);
-  // Create a timeline for smooth transition
-  const timeline = gsap.timeline();
-  cards.forEach((card, index) => {
-    const xPos = (index - (CONFIG.totalCards - 1) / 2) * cardSpacing;
-    const yPos =
-      Math.sin((index / (CONFIG.totalCards - 1)) * Math.PI * 2) * waveHeight;
-    // Animate from current position to wave position
-    timeline.to(
-      card,
-      {
-        x: xPos,
-        y: yPos,
-        rotation: 0,
-        scale: 0.7,
-        duration: CONFIG.animations.transitionDuration,
-        ease: "power2.inOut"
-      },
-      0
-    ); // Start all animations at the same time
-  });
-  return timeline;
-}
-// Start wave animation after transition
-function startWaveAnimation() {
-  const cards = gsap.utils.toArray(".carousel-item");
-  const viewport = getViewportSize();
-  const waveHeight = Math.min(viewport.height * 0.1, 80);
-  return gsap.to(cards, {
-    y: (i) => {
-      const normalizedIndex = i / (CONFIG.totalCards - 1);
-      return Math.sin(normalizedIndex * Math.PI * 2 + Math.PI) * waveHeight;
-    },
-    duration: 1.5,
-    repeat: -1,
-    yoyo: true,
-    ease: "sine.inOut"
-  });
-}
-// Setup stagger positions
-function setupStaggerPositions() {
-  const cards = gsap.utils.toArray(".carousel-item");
-  const viewport = getViewportSize();
-  const cardWidth = parseFloat(
-    getComputedStyle(document.documentElement).getPropertyValue("--card-width")
-  );
-  const cardHeight = parseFloat(
-    getComputedStyle(document.documentElement).getPropertyValue("--card-height")
-  );
-  const rows = 3;
-  const cols = 4;
-  const xSpacing = cardWidth * 0.7;
-  const ySpacing = cardHeight * 0.7;
-  // Create a timeline for smooth transition
-  const timeline = gsap.timeline();
-  cards.forEach((card, index) => {
-    const row = Math.floor(index / cols);
-    const col = index % cols;
-    const xOffset = row % 2 === 1 ? xSpacing / 2 : 0;
-    const xPos = (col - (cols - 1) / 2) * xSpacing + xOffset;
-    const yPos = (row - (rows - 1) / 2) * ySpacing;
-    // Animate from current position to stagger position
-    timeline.to(
-      card,
-      {
-        x: xPos,
-        y: yPos,
-        rotation: 0,
-        scale: 0.7,
-        duration: CONFIG.animations.transitionDuration,
-        ease: "power2.inOut"
-      },
-      0
-    ); // Start all animations at the same time
-  });
-  return timeline;
-}
-// Setup stagger mouse tracking
-function setupStaggerMouseTracking() {
-  const viewport = getViewportSize();
-  const cardWidth = parseFloat(
-    getComputedStyle(document.documentElement).getPropertyValue("--card-width")
-  );
-  const cardHeight = parseFloat(
-    getComputedStyle(document.documentElement).getPropertyValue("--card-height")
-  );
-  const rows = 3;
-  const cols = 4;
-  const xSpacing = cardWidth * 0.7;
-  const ySpacing = cardHeight * 0.7;
-  // Make a more subtle parallax effect with significantly reduced maxOffset
-  const maxOffset = 40; // Reduced from 200 to 40 for a much more subtle effect
-  carouselContainerEl.onmousemove = (e) => {
-    if (currentAnimation !== "stagger" || isTransitioning) return;
-    const mouseY = e.clientY / viewport.height;
-    const offset = (mouseY - 0.5) * -maxOffset; // Removed multiplication by 2 for a gentler effect
-    const cards = gsap.utils.toArray(".carousel-item");
-    cards.forEach((card, index) => {
-      const row = Math.floor(index / cols);
-      const col = index % cols;
-      const xOffset = row % 2 === 1 ? xSpacing / 2 : 0;
-      const xPos = (col - (cols - 1) / 2) * xSpacing + xOffset;
-      const yPos = (row - (rows - 1) / 2) * ySpacing + offset;
-      // Slower animation for smoother, more subtle movement
-      gsap.to(card, {
-        y: yPos,
-        duration: 0.8, // Increased from 0.5 to 0.8 for smoother movement
-        ease: "power2.out"
-      });
-    });
-  };
-}
-// Setup grid positions
-function setupGridPositions() {
-  const cards = gsap.utils.toArray(".carousel-item");
-  const viewport = getViewportSize();
-  const cardWidth = parseFloat(
-    getComputedStyle(document.documentElement).getPropertyValue("--card-width")
-  );
-  const cardHeight = parseFloat(
-    getComputedStyle(document.documentElement).getPropertyValue("--card-height")
-  );
-  const viewport_ratio = viewport.width / viewport.height;
-  let rows, cols;
-  if (viewport_ratio > 1) {
-    rows = 3;
-    cols = 4;
-  } else {
-    rows = 4;
-    cols = 3;
-  }
-  const scale = Math.min(
-    0.8,
-    viewport.width / (cols * cardWidth * 1.2),
-    viewport.height / (rows * cardHeight * 1.2)
-  );
-  const xSpacing = cardWidth * scale * 1.2;
-  const ySpacing = cardHeight * scale * 1.2;
-  // Create a timeline for smooth transition
-  const timeline = gsap.timeline();
-  cards.forEach((card, index) => {
-    const col = index % cols;
-    const row = Math.floor(index / cols);
-    const xPos = (col - (cols - 1) / 2) * xSpacing;
-    const yPos = (row - (rows - 1) / 2) * ySpacing;
-    // Animate from current position to grid position
-    timeline.to(
-      card,
-      {
-        x: xPos,
-        y: yPos,
-        rotation: 0,
-        scale: scale,
-        duration: CONFIG.animations.transitionDuration,
-        ease: "power2.inOut"
-      },
-      0
-    ); // Start all animations at the same time
-  });
-  return timeline;
-}
-// Setup fan positions
-function setupFanPositions() {
-  const cards = gsap.utils.toArray(".carousel-item");
-  const viewport = getViewportSize();
-  const maxFanAngle = Math.min(180, viewport.width / 5);
-  const fanStartAngle = -maxFanAngle / 2;
-  const fanEndAngle = maxFanAngle / 2;
-  // Create a timeline for smooth transition
-  const timeline = gsap.timeline();
-  cards.forEach((card, index) => {
-    const progress = index / (CONFIG.totalCards - 1);
-    const angle = fanStartAngle + progress * (fanEndAngle - fanStartAngle);
-    const yOffset = Math.sin((progress - 0.5) * Math.PI) * 50;
-    // Animate from current position to fan position
-    timeline.to(
-      card,
-      {
-        x: 0,
-        y: yOffset,
-        rotation: angle,
-        scale: 0.8,
-        duration: CONFIG.animations.transitionDuration,
-        ease: "power2.inOut"
-      },
-      0
-    ); // Start all animations at the same time
-  });
-  return timeline;
-}
-// Setup 3D depth positions
-function setup3DDepthPositions() {
-  const cards = gsap.utils.toArray(".carousel-item");
-  const viewport = getViewportSize();
-  // Positions for 3D depth effect - keeping the exact same values
-  const positions = [
-    // Front layer (closest to viewer)
-    {
-      x: -viewport.width * 0.25,
-      y: -viewport.height * 0.2,
-      z: -200,
-      scale: 0.9,
-      rotX: -5,
-      rotY: 5
-    },
-    {
-      x: viewport.width * 0.25,
-      y: -viewport.height * 0.25,
-      z: -300,
-      scale: 0.85,
-      rotX: -3,
-      rotY: -4
-    },
-    {
-      x: -viewport.width * 0.3,
-      y: viewport.height * 0.2,
-      z: -400,
-      scale: 0.8,
-      rotX: 4,
-      rotY: 6
-    },
-    {
-      x: viewport.width * 0.3,
-      y: viewport.height * 0.25,
-      z: -500,
-      scale: 0.75,
-      rotX: 5,
-      rotY: -5
-    },
-    // Middle layer
-    {
-      x: 0,
-      y: -viewport.height * 0.3,
-      z: -700,
-      scale: 0.7,
-      rotX: -6,
-      rotY: 0
-    },
-    {
-      x: -viewport.width * 0.35,
-      y: 0,
-      z: -800,
-      scale: 0.65,
-      rotX: 0,
-      rotY: 7
-    },
-    {
-      x: viewport.width * 0.35,
-      y: 0,
-      z: -900,
-      scale: 0.6,
-      rotX: 0,
-      rotY: -7
-    },
-    {
-      x: 0,
-      y: viewport.height * 0.3,
-      z: -1000,
-      scale: 0.55,
-      rotX: 6,
-      rotY: 0
-    },
-    // Back layer (furthest from viewer)
-    {
-      x: -viewport.width * 0.2,
-      y: -viewport.height * 0.15,
-      z: -1200,
-      scale: 0.5,
-      rotX: -3,
-      rotY: 3
-    },
-    {
-      x: viewport.width * 0.2,
-      y: -viewport.height * 0.15,
-      z: -1300,
-      scale: 0.45,
-      rotX: -3,
-      rotY: -3
-    },
-    {
-      x: -viewport.width * 0.2,
-      y: viewport.height * 0.15,
-      z: -1400,
-      scale: 0.4,
-      rotX: 3,
-      rotY: 3
-    },
-    {
-      x: viewport.width * 0.2,
-      y: viewport.height * 0.15,
-      z: -1500,
-      scale: 0.35,
-      rotX: 3,
-      rotY: -3
-    }
-  ];
-  // Create a timeline for smooth transition
-  const timeline = gsap.timeline();
-  cards.forEach((card, index) => {
-    if (index >= positions.length) return;
-    const pos = positions[index];
-    // Update z-index based on depth
-    const zIndex = 1000 - Math.round(Math.abs(pos.z));
-    gsap.set(card, {
-      zIndex: zIndex
-    });
-    // Animate from current position to 3D position
-    timeline.to(
-      card,
-      {
-        x: pos.x,
-        y: pos.y,
-        z: pos.z,
-        rotationX: pos.rotX,
-        rotationY: pos.rotY,
-        scale: pos.scale,
-        duration: CONFIG.animations.transitionDuration,
-        ease: "power2.inOut"
-      },
-      0
-    ); // Start all animations at the same time
-  });
-  return timeline;
-}
-// Setup 3D depth mouse tracking
-function setup3DDepthMouseTracking() {
-  const viewport = getViewportSize();
-  carouselContainerEl.onmousemove = (e) => {
-    if (currentAnimation !== "depth" || isTransitioning) return;
-    const mouseX = e.clientX / viewport.width - 0.5;
-    const mouseY = e.clientY / viewport.height - 0.5;
-    // Using the exact same values as in the original code
-    gsap.to(".carousel-items", {
-      rotationY: mouseX * 3,
-      rotationX: -mouseY * 3,
-      duration: 1.2, // Slower response for smoother effect
-      ease: "power1.out"
-    });
-  };
-}
-// Update z-indices for different patterns
-function updateZIndices(pattern) {
-  const cards = gsap.utils.toArray(".carousel-item");
-  if (pattern === "depth") {
-    // For 3D depth, z-index is based on z position
-    const positions = setup3DDepthPositions();
-    cards.forEach((card, index) => {
-      if (index < CONFIG.totalCards) {
-        const zIndex = 1000 - Math.round(Math.abs(positions[index]?.z || 0));
-        gsap.set(card, {
-          zIndex: zIndex
-        });
-      }
-    });
-  } else {
-    // For all other patterns, restore the original z-indices
-    cards.forEach((card, index) => {
-      if (index < originalZIndices.length) {
-        gsap.set(card, {
-          zIndex: originalZIndices[index]
-        });
-      }
-    });
-  }
-}
-// Transition to a different pattern
-function transitionToPattern(newPattern) {
-  if (isTransitioning) return;
-  isTransitioning = true;
+        onComplete: () => {
+          this.DOM.slides[previous].classList.remove("slide--current");
+          gsap.set(upcomingSlide, { zIndex: 1 });
 
-  // Kill active animations
-  killActiveAnimations();
-  // Save current wheel rotation before killing draggable
-  const currentWheelRotation = draggableInstance
-    ? draggableInstance.rotation
-    : 0;
-  // Kill draggable
-  if (draggableInstance) {
-    draggableInstance.kill();
-    draggableInstance = null;
-  }
-  // Remove draggable cursor class
-  carouselItemsEl.classList.remove("draggable");
-  // Clear mouse tracking
-  carouselContainerEl.onmousemove = null;
-  // Save previous animation
-  const prevAnimation = currentAnimation;
-  // Update current animation
-  currentAnimation = newPattern;
-  // Create a master timeline for the transition
-  const timeline = gsap.timeline({
-    onComplete: () => {
-      isTransitioning = false;
-      // Setup additional features after transition
-      if (newPattern === "circle") {
-        setupDraggable();
-      } else if (newPattern === "wave") {
-        const waveAnim = startWaveAnimation();
-        if (waveAnim) activeAnimations.push(waveAnim);
-      } else if (newPattern === "stagger") {
-        setupStaggerMouseTracking();
-      } else if (newPattern === "fan") {
-        // Add draggable to fan layout
-        setupDraggable();
-      } else if (newPattern === "depth") {
-        setup3DDepthMouseTracking();
-      }
-    }
-  });
-  activeAnimations.push(timeline);
-  // If coming from a pattern with rotation (like Fan), first reset all cards to normal orientation
-  // This creates a cleaner transition, especially when going from Fan to 3D Depth
-  if (prevAnimation === "fan") {
-    const cards = gsap.utils.toArray(".carousel-item");
-    const normalizeTimeline = gsap.timeline();
-    cards.forEach((card) => {
-      normalizeTimeline.to(
-        card,
+          // Reset animation state
+          isAnimating = false;
+          updateNavigationUI(false);
+
+          // Check if there's a pending navigation
+          if (pendingNavigation) {
+            const { type, index, direction } = pendingNavigation;
+            pendingNavigation = null;
+
+            // Execute the pending navigation after a small delay
+            setTimeout(() => {
+              if (type === "goto") {
+                this.goTo(index);
+              } else if (type === "navigate") {
+                this.navigate(direction);
+              }
+            }, 50);
+          }
+
+          // Re-apply hover effect if mouse is still over thumbnails
+          if (mouseOverThumbnails && lastHoveredThumbIndex !== null) {
+            currentHoveredThumb = lastHoveredThumbIndex;
+            updateDragLines(lastHoveredThumbIndex, true);
+          }
+        }
+      })
+      .addLabel("start", 0)
+      .fromTo(
+        upcomingSlide,
         {
-          rotation: 0,
-          rotationX: 0,
-          rotationY: 0,
-          duration: CONFIG.animations.transitionDuration / 2,
-          ease: "power2.inOut"
+          autoAlpha: 1,
+          scale: 0.1,
+          yPercent: direction === 1 ? 100 : -100 // Bottom for next, top for prev
         },
-        0
+        {
+          duration: 0.7,
+          ease: "expo",
+          scale: 0.4,
+          yPercent: 0
+        },
+        "start"
+      )
+      .fromTo(
+        upcomingInner,
+        {
+          filter: "contrast(100%) saturate(100%)",
+          transformOrigin: "100% 50%",
+          scaleY: 4
+        },
+        {
+          duration: 0.7,
+          ease: "expo",
+          scaleY: 1
+        },
+        "start"
+      )
+      .fromTo(
+        currentInner,
+        {
+          filter: "contrast(100%) saturate(100%)"
+        },
+        {
+          duration: 0.7,
+          ease: "expo",
+          filter: "contrast(120%) saturate(140%)"
+        },
+        "start"
+      )
+      .addLabel("middle", "start+=0.6")
+      .to(
+        upcomingSlide,
+        {
+          duration: 1,
+          ease: "power4.inOut",
+          scale: 1
+        },
+        "middle"
+      )
+      .to(
+        currentSlide,
+        {
+          duration: 1,
+          ease: "power4.inOut",
+          scale: 0.98,
+          autoAlpha: 0
+        },
+        "middle"
       );
+  }
+
+  navigate(direction) {
+    // If already animating, store this as pending navigation
+    if (isAnimating) {
+      pendingNavigation = { type: "navigate", direction };
+      return false;
+    }
+
+    // Set animation state
+    isAnimating = true;
+    updateNavigationUI(true);
+
+    const previous = this.current;
+    this.current =
+      direction === 1
+        ? this.current < this.slidesTotal - 1
+          ? ++this.current
+          : 0
+        : this.current > 0
+        ? --this.current
+        : this.slidesTotal - 1;
+
+    // Update active thumbnail
+    const thumbs = document.querySelectorAll(".slide-thumb");
+    thumbs.forEach((thumb, index) => {
+      if (index === this.current) {
+        thumb.classList.add("active");
+      } else {
+        thumb.classList.remove("active");
+      }
     });
-    timeline.add(normalizeTimeline);
-    // Add a small pause to let the cards normalize before transitioning
-    timeline.to(
-      {},
-      {
-        duration: 0.1
-      }
-    );
-  }
-  // Handle pattern transition with master timeline
-  let patternTimeline;
-  // If we're coming from circle, keep the current wheel rotation
-  // For other transitions, reset the wheel rotation
-  if (newPattern !== "circle" && newPattern !== "fan") {
-    // Reset carousel items (but keep current rotation if coming from circle)
-    if (prevAnimation === "circle" || prevAnimation === "fan") {
-      // Keep current rotation to start transition from
-      timeline.set(".carousel-items", {
-        rotationX: 0,
-        rotationY: 0
-      });
-    } else {
-      // Coming from a non-circle pattern, reset rotation completely
-      timeline.set(".carousel-items", {
-        rotation: 0,
-        rotationX: 0,
-        rotationY: 0
-      });
-    }
-  }
-  switch (newPattern) {
-    case "circle":
-      patternTimeline = setupCirclePositions(true);
-      if (patternTimeline) timeline.add(patternTimeline, 0);
-      break;
-    case "wave":
-      patternTimeline = setupWavePositions();
-      if (patternTimeline) timeline.add(patternTimeline, 0);
-      // Animate the wheel rotation to 0 if coming from circle or fan
-      if (prevAnimation === "circle" || prevAnimation === "fan") {
-        timeline.to(
-          ".carousel-items",
-          {
-            rotation: 0,
-            duration: CONFIG.animations.transitionDuration,
-            ease: "power2.inOut"
-          },
-          0
-        );
-      }
-      break;
-    case "stagger":
-      patternTimeline = setupStaggerPositions();
-      if (patternTimeline) timeline.add(patternTimeline, 0);
-      // Animate the wheel rotation to 0 if coming from circle or fan
-      if (prevAnimation === "circle" || prevAnimation === "fan") {
-        timeline.to(
-          ".carousel-items",
-          {
-            rotation: 0,
-            duration: CONFIG.animations.transitionDuration,
-            ease: "power2.inOut"
-          },
-          0
-        );
-      }
-      break;
-    case "grid":
-      patternTimeline = setupGridPositions();
-      if (patternTimeline) timeline.add(patternTimeline, 0);
-      // Animate the wheel rotation to 0 if coming from circle or fan
-      if (prevAnimation === "circle" || prevAnimation === "fan") {
-        timeline.to(
-          ".carousel-items",
-          {
-            rotation: 0,
-            duration: CONFIG.animations.transitionDuration,
-            ease: "power2.inOut"
-          },
-          0
-        );
-      }
-      break;
-    case "fan":
-      patternTimeline = setupFanPositions();
-      if (patternTimeline) timeline.add(patternTimeline, 0);
-      // Animate the wheel rotation to 0 if coming from circle
-      if (prevAnimation === "circle") {
-        timeline.to(
-          ".carousel-items",
-          {
-            rotation: 0,
-            duration: CONFIG.animations.transitionDuration,
-            ease: "power2.inOut"
-          },
-          0
-        );
-      }
-      break;
-    case "depth":
-      patternTimeline = setup3DDepthPositions();
-      if (patternTimeline) timeline.add(patternTimeline, 0);
-      // Animate the wheel rotation to 0 if coming from circle or fan
-      if (prevAnimation === "circle" || prevAnimation === "fan") {
-        timeline.to(
-          ".carousel-items",
-          {
-            rotation: 0,
-            duration: CONFIG.animations.transitionDuration,
-            ease: "power2.inOut"
-          },
-          0
-        );
-      }
-      break;
+
+    // Update counter and title
+    updateSlideCounter(this.current);
+    updateSlideTitle(this.current);
+
+    // Highlight active thumbnail in drag line indicator
+    updateDragLines(this.current, true);
+
+    // Get slides and perform animation
+    const currentSlide = this.DOM.slides[previous];
+    const currentInner = this.DOM.slidesInner[previous];
+    const upcomingSlide = this.DOM.slides[this.current];
+    const upcomingInner = this.DOM.slidesInner[this.current];
+
+    gsap
+      .timeline({
+        onStart: () => {
+          this.DOM.slides[this.current].classList.add("slide--current");
+          gsap.set(upcomingSlide, { zIndex: 99 });
+        },
+        onComplete: () => {
+          this.DOM.slides[previous].classList.remove("slide--current");
+          gsap.set(upcomingSlide, { zIndex: 1 });
+
+          // Reset animation state
+          isAnimating = false;
+          updateNavigationUI(false);
+
+          // Check if there's a pending navigation
+          if (pendingNavigation) {
+            const { type, index, direction } = pendingNavigation;
+            pendingNavigation = null;
+
+            // Execute the pending navigation after a small delay
+            setTimeout(() => {
+              if (type === "goto") {
+                this.goTo(index);
+              } else if (type === "navigate") {
+                this.navigate(direction);
+              }
+            }, 50);
+          }
+
+          // Re-apply hover effect if mouse is still over thumbnails
+          if (mouseOverThumbnails && lastHoveredThumbIndex !== null) {
+            currentHoveredThumb = lastHoveredThumbIndex;
+            updateDragLines(lastHoveredThumbIndex, true);
+          }
+        }
+      })
+      .addLabel("start", 0)
+      .fromTo(
+        upcomingSlide,
+        {
+          autoAlpha: 1,
+          scale: 0.1,
+          yPercent: direction === 1 ? 100 : -100 // Bottom for next, top for prev
+        },
+        {
+          duration: 0.7,
+          ease: "expo",
+          scale: 0.4,
+          yPercent: 0
+        },
+        "start"
+      )
+      .fromTo(
+        upcomingInner,
+        {
+          filter: "contrast(100%) saturate(100%)",
+          transformOrigin: "100% 50%",
+          scaleY: 4
+        },
+        {
+          duration: 0.7,
+          ease: "expo",
+          scaleY: 1
+        },
+        "start"
+      )
+      .fromTo(
+        currentInner,
+        {
+          filter: "contrast(100%) saturate(100%)"
+        },
+        {
+          duration: 0.7,
+          ease: "expo",
+          filter: "contrast(120%) saturate(140%)"
+        },
+        "start"
+      )
+      .addLabel("middle", "start+=0.6")
+      .to(
+        upcomingSlide,
+        {
+          duration: 1,
+          ease: "power4.inOut",
+          scale: 1
+        },
+        "middle"
+      )
+      .to(
+        currentSlide,
+        {
+          duration: 1,
+          ease: "power4.inOut",
+          scale: 0.98,
+          autoAlpha: 0
+        },
+        "middle"
+      );
   }
 }
-// Initialize with a circle layout
-function initializeCarousel() {
-  const cards = gsap.utils.toArray(".carousel-item");
-  const totalCards = cards.length;
-  // Set initial opacity and scale
-  gsap.set(cards, {
-    x: 0,
-    y: 0,
-    rotation: 0,
-    scale: 0,
-    opacity: 0
-  });
-
-  // Make sure the switch menu is hidden initially
-  gsap.set(".switch", { opacity: 0, visibility: "hidden" });
-
-  // Create timeline for intro animation
-  const timeline = gsap.timeline({
-    onComplete: () => {
-      isTransitioning = false;
-      setupDraggable();
-
-      // Fade in the switch menu after the intro animation completes
-      gsap.to(".switch", {
-        opacity: 1,
-        visibility: "visible",
-        duration: 0.8,
-        ease: "power2.inOut"
-      });
-    }
-  });
-
-  // Intro animation: cards appear stacked with last on top
-  // Start with the last card (11) and end with the first card (0)
-  for (let i = 0; i < totalCards; i++) {
-    const card = cards[i];
-    const delay = (totalCards - 1 - i) * 0.1; // Shorter delay per card
-    // Set z-index in reverse order so last cards appear on top of first cards
-    // Card 11 (last) gets highest z-index, Card 0 (first) gets lowest z-index
-    gsap.set(card, {
-      zIndex: 100 + (totalCards - 1 - i)
-    });
-    // Last card (11) appears first, first card (0) appears last
-    timeline.to(
-      card,
-      {
-        opacity: 1,
-        scale: 0.8,
-        duration: 0.5,
-        ease: "power2.out"
-      },
-      delay
-    );
-  }
-  // Add a pause before circle transition
-  timeline.to(
-    {},
-    {
-      duration: 0.3
-    }
-  );
-  // Transition to circle with animation
-  const circleTimeline = setupCirclePositions(true);
-  timeline.add(circleTimeline);
-  // Set current animation and store timeline
-  currentAnimation = "circle";
-  activeAnimations.push(timeline);
-  return timeline;
-}
-// Reset carousel
-function resetCarousel() {
-  killActiveAnimations();
-  if (draggableInstance) {
-    draggableInstance.kill();
-    draggableInstance = null;
-  }
-  carouselContainerEl.onmousemove = null;
-  gsap.set(".carousel-items", {
-    rotation: 0,
-    rotationX: 0,
-    rotationY: 0
-  });
-
-  // Reset animation
-  generateCards();
-  initializeCarousel();
-
-  currentAnimation = "circle";
-  isTransitioning = false;
-}
-// Handle resize
-function handleResize() {
-  if (!isTransitioning) {
-    transitionToPattern(currentAnimation);
-  }
-}
-// Add event listeners
-window.addEventListener("resize", handleResize);
-
-// Close modal event listeners
-document.getElementById('closeModal').addEventListener('click', hideVideoModal);
-document.getElementById('videoModal').addEventListener('click', (e) => {
-  if (e.target.id === 'videoModal') {
-    hideVideoModal();
-  }
-});
 
 // Initialize
-generateCards();
-initializeCarousel();
+document.addEventListener("DOMContentLoaded", () => {
+  // Create slideshow instance
+  const slides = document.querySelector(".slides");
+  const slideshow = new Slideshow(slides);
+
+  // Create thumbnails
+  const thumbsContainer = document.querySelector(".slide-thumbs");
+  const slideImgs = document.querySelectorAll(".slide__img");
+  const slideCount = slideImgs.length;
+
+  // Clear thumbs container first (in case it had any previous content)
+  if (thumbsContainer) {
+    thumbsContainer.innerHTML = "";
+    slideImgs.forEach((img, index) => {
+      const bgImg = img.style.backgroundImage;
+      const thumb = document.createElement("div");
+      thumb.className = "slide-thumb";
+      thumb.style.backgroundImage = bgImg;
+      if (index === 0) {
+        thumb.classList.add("active");
+      }
+
+      // Animation for clicking on thumbnails - use goTo method
+      thumb.addEventListener("click", () => {
+        // Store the clicked thumbnail index for later
+        lastHoveredThumbIndex = index;
+
+        // Use the new goTo method which handles animation state
+        slideshow.goTo(index);
+      });
+
+      // Add hover effect to thumbnails with global tracking
+      thumb.addEventListener("mouseenter", () => {
+        // Update the global variable to track which thumbnail is hovered
+        currentHoveredThumb = index;
+        lastHoveredThumbIndex = index;
+        mouseOverThumbnails = true;
+
+        // Only update lines if not animating
+        if (!isAnimating) {
+          updateDragLines(index, true);
+        }
+      });
+
+      thumb.addEventListener("mouseleave", () => {
+        // Only reset if we're leaving this specific thumbnail
+        // This prevents resetting when moving directly to another thumbnail
+        if (currentHoveredThumb === index) {
+          currentHoveredThumb = null;
+          // Don't reset lastHoveredThumbIndex here
+        }
+      });
+
+      thumbsContainer.appendChild(thumb);
+    });
+  }
+
+  // Create continuous drag indicator lines
+  const dragIndicator = document.querySelector(".drag-indicator");
+  if (dragIndicator) {
+    dragIndicator.innerHTML = "";
+
+    // Create a container for the lines to ensure consistent positioning
+    const linesContainer = document.createElement("div");
+    linesContainer.className = "lines-container";
+    dragIndicator.appendChild(linesContainer);
+
+    // Create evenly spaced lines across the entire width
+    const totalLines = 60; // Increased number of lines for smoother appearance
+    for (let i = 0; i < totalLines; i++) {
+      const line = document.createElement("div");
+      line.className = "drag-line";
+      linesContainer.appendChild(line);
+    }
+  }
+
+  // Set total slides
+  const totalSlidesEl = document.querySelector(".total-slides");
+  if (totalSlidesEl) {
+    totalSlidesEl.textContent = String(slideCount).padStart(2, "0");
+  }
+
+  // Add navigation handlers - use direct methods instead of throttled versions
+  const prevButton = document.querySelector(".prev-slide");
+  const nextButton = document.querySelector(".next-slide");
+
+  if (prevButton) {
+    prevButton.addEventListener("click", () => slideshow.prev());
+  }
+
+  if (nextButton) {
+    nextButton.addEventListener("click", () => slideshow.next());
+  }
+
+  // Initialize counters and lines
+  updateSlideCounter(0);
+  updateDragLines(0, true); // Initialize the first thumbnail's lines
+
+  // Add global mouse leave handler for the entire thumbnails area
+  const thumbsArea = document.querySelector(".thumbs-container");
+  if (thumbsArea) {
+    thumbsArea.addEventListener("mouseenter", () => {
+      mouseOverThumbnails = true;
+    });
+
+    thumbsArea.addEventListener("mouseleave", () => {
+      // Reset all lines when mouse leaves the entire thumbnails area
+      mouseOverThumbnails = false;
+      currentHoveredThumb = null;
+      updateDragLines(null);
+    });
+  }
+
+  // Initialize GSAP Observer for scroll/drag with animation state check
+  try {
+    // First try using it directly
+    if (typeof Observer !== "undefined") {
+      Observer.create({
+        type: "wheel,touch,pointer",
+        onDown: () => {
+          if (!isAnimating) slideshow.prev();
+        },
+        onUp: () => {
+          if (!isAnimating) slideshow.next();
+        },
+        wheelSpeed: -1,
+        tolerance: 10
+      });
+    }
+    // Then try from GSAP
+    else if (typeof gsap.Observer !== "undefined") {
+      gsap.Observer.create({
+        type: "wheel,touch,pointer",
+        onDown: () => {
+          if (!isAnimating) slideshow.prev();
+        },
+        onUp: () => {
+          if (!isAnimating) slideshow.next();
+        },
+        wheelSpeed: -1,
+        tolerance: 10
+      });
+    }
+    // Fallback
+    else {
+      console.warn("GSAP Observer plugin not found, using fallback");
+
+      // Add wheel event listener with animation state check
+      document.addEventListener("wheel", (e) => {
+        if (isAnimating) return;
+
+        if (e.deltaY > 0) {
+          slideshow.next();
+        } else {
+          slideshow.prev();
+        }
+      });
+
+      // Add touch events with animation state check
+      let touchStartY = 0;
+
+      document.addEventListener("touchstart", (e) => {
+        touchStartY = e.touches[0].clientY;
+      });
+
+      document.addEventListener("touchend", (e) => {
+        if (isAnimating) return;
+
+        const touchEndY = e.changedTouches[0].clientY;
+        const diff = touchEndY - touchStartY;
+
+        if (Math.abs(diff) > 50) {
+          if (diff > 0) {
+            slideshow.prev();
+          } else {
+            slideshow.next();
+          }
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Error initializing Observer:", error);
+  }
+
+  // Keyboard navigation with animation state check
+  document.addEventListener("keydown", (e) => {
+    if (isAnimating) return;
+
+    if (e.key === "ArrowRight") slideshow.next();
+    else if (e.key === "ArrowLeft") slideshow.prev();
+  });
+});
