@@ -6,7 +6,11 @@ pip install -r requirements.txt
 
 cd scoretracker
 python manage.py collectstatic --no-input
-python manage.py migrate --run-syncdb
+
+# Remove existing database to force fresh creation
+rm -f db.sqlite3
+
+python manage.py migrate
 python manage.py init_teams
 python manage.py init_games
 
