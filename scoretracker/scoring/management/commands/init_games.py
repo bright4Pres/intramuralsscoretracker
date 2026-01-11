@@ -212,28 +212,35 @@ class Command(BaseCommand):
         mr_pisay = Game.objects.filter(name='Mr. Pisay').first()
         miss_pisay = Game.objects.filter(name='Miss Pisay').first()
         
+        special_awards = [
+            'Photogenic',
+            'Congeniality',
+            'Professionalism',
+            'Popularity',
+        ]
+        
         awards_created = 0
         if mr_pisay:
-            for i in range(1, 5):
+            for award_name in special_awards:
                 award, created = SpecialAward.objects.get_or_create(
                     game=mr_pisay,
-                    award_name=f'Award {i}',
+                    award_name=f'Mr. {award_name}',
                     defaults={'points': 5, 'team': None}
                 )
                 if created:
                     awards_created += 1
-                    self.stdout.write(self.style.SUCCESS(f'Created: Mr. Pisay - Award {i}'))
+                    self.stdout.write(self.style.SUCCESS(f'Created: Mr. {award_name}'))
         
         if miss_pisay:
-            for i in range(1, 5):
+            for award_name in special_awards:
                 award, created = SpecialAward.objects.get_or_create(
                     game=miss_pisay,
-                    award_name=f'Award {i}',
+                    award_name=f'Ms. {award_name}',
                     defaults={'points': 5, 'team': None}
                 )
                 if created:
                     awards_created += 1
-                    self.stdout.write(self.style.SUCCESS(f'Created: Miss Pisay - Award {i}'))
+                    self.stdout.write(self.style.SUCCESS(f'Created: Ms. {award_name}'))
         
         self.stdout.write(self.style.SUCCESS(
             f'\nFinished! Created {created_count} games, Updated {updated_count} games, Created {awards_created} special awards'
