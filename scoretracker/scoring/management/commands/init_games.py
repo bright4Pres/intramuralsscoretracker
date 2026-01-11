@@ -220,6 +220,20 @@ class Command(BaseCommand):
         ]
         
         awards_created = 0
+        awards_deleted = 0
+        
+        # Delete old awards first
+        if mr_pisay:
+            deleted = SpecialAward.objects.filter(game=mr_pisay).delete()
+            awards_deleted += deleted[0]
+            self.stdout.write(self.style.WARNING(f'Deleted {deleted[0]} old Mr. Pisay awards'))
+            
+        if miss_pisay:
+            deleted = SpecialAward.objects.filter(game=miss_pisay).delete()
+            awards_deleted += deleted[0]
+            self.stdout.write(self.style.WARNING(f'Deleted {deleted[0]} old Miss Pisay awards'))
+        
+        # Create new awards
         if mr_pisay:
             for award_name in special_awards:
                 award, created = SpecialAward.objects.get_or_create(
