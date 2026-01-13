@@ -393,16 +393,23 @@ def mrmspisay_showcase(request):
     contestants = Contestant.objects.filter(is_active=True).order_by('order')
     contestants_data = []
     
+    # Get team colors
+    teams = Team.objects.all()
+    team_colors = {team.name: team.color for team in teams}
+    
     for contestant in contestants:
         contestants_data.append({
             'id': contestant.id,
             'name': contestant.name,
             'empire': contestant.empire,
+            'empire_display': contestant.get_empire_display(),
+            'empire_color': team_colors.get(contestant.empire, '#FFFFFF'),
             'photo_url': contestant.photo.url if contestant.photo else '',
             'video_url': contestant.advocacy_video.url if contestant.advocacy_video else '',
         })
     
     return render(request, 'mrmspisay.html', {
         'contestants': contestants,
-        'contestant_names_json': json.dumps(contestants_data)
+        'contestant_names_json': json.dumps(contestants_data),
+        'team_colors': json.dumps(team_colors)
     })
