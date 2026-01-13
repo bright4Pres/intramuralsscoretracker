@@ -11,11 +11,8 @@
   </head>
     
   <body>
-  <div class="scroll-hint">scroll or drag</div>
-
 <!-- Bottom UI container that holds all bottom elements -->
 <div class="bottom-ui-container">
-  <div class="slide-section">mrmspisay</div>
   <div class="slide-counter">
     <div class="counter-nav prev-slide">⟪</div>
     <div class="counter-display">
@@ -27,6 +24,7 @@
   </div>
   <div class="slide-title-container">
     <div class="slide-title">{% if contestants %}{{ contestants.0.name }}{% endif %}</div>
+    <div id="empire-section"></div>
   </div>
   <div class="drag-indicator"></div>
   <div class="thumbs-container">
@@ -37,8 +35,8 @@
 
 <div class="slides">
   {% for contestant in contestants %}
-  <div class="slide">
-    <div class="slide__img" style="background-image: url({% if contestant.photo %}{{ contestant.photo.url }}{% endif %}); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);"></div>
+  <div class="slide slide--{{ contestant.empire|lower }}">
+    <div class="slide__img" style="background-image: url({% if contestant.photo %}{{ contestant.photo.url }}{% endif %}); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
   </div>
   {% endfor %}
 </div>

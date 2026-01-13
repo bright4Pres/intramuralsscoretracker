@@ -3,7 +3,7 @@ const NEXT = 1;
 const PREV = -1;
 
 // Slide titles array (global) - use contestant names from Django
-const slideTitles = contestantNames || [];
+const slideTitles = contestantNames.map(c => c.name) || [];
 
 // Empire data from Django
 const empireNames = typeof contestantEmpires !== 'undefined' ? contestantEmpires : [];
@@ -78,14 +78,11 @@ function updateEmpireSection(index) {
   const empireSection = document.getElementById("empire-section");
   if (!empireSection) return;
 
-  const empireName = (empireNames && empireNames[index]) ? empireNames[index] : "COSMIC SERIES";
-  
-  // Simple color mapping based on empire name
-  let empireColor = "#ffffff"; // default white
-  if (empireName.toLowerCase().includes("shinobi")) empireColor = "#DC2626";
-  else if (empireName.toLowerCase().includes("pegasus")) empireColor = "#FACC15";
-  else if (empireName.toLowerCase().includes("chimera")) empireColor = "#1E1B4B";
-  else if (empireName.toLowerCase().includes("phoenix")) empireColor = "#F97316";
+  const empireName = empireNames[index] || "COSMIC SERIES";
+  const empireKey = Object.keys(empireColorMap).find(key => 
+    empireColorMap[key] && empireName.toLowerCase().includes(key.toLowerCase())
+  );
+  const empireColor = empireKey ? empireColorMap[empireKey] : "#ffffff";
 
   // Update text
   empireSection.textContent = empireName.toUpperCase();

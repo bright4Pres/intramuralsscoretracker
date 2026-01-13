@@ -14,12 +14,17 @@
   /* Controls spacing between lines */
   --line-base-height: 15px;
   --line-max-height: 50px;
+  /* Team colors */
+  --color-team-shinobi: 220 38 38;
+  --color-team-pegasus: 250 204 21;
+  --color-team-chimera: 30 27 75;
+  --color-team-phoenix: 249 115 22;
 }
 
 body {
   margin: 0;
   color: var(--color-text);
-  background-color: var(--color-bg);
+  background-color: #000000;
   font-family: "Orbitron", monospace;
   overflow: hidden;
   height: 100vh;
@@ -33,6 +38,7 @@ body {
   grid-template-rows: 100%;
   grid-template-columns: 100%;
   place-items: center;
+  background: #000000;
 }
 
 .slide {
@@ -57,9 +63,148 @@ body {
   width: 100%;
   height: 100%;
   background-size: cover;
-  background-position: left center;
+  background-position: center center;
   background-repeat: no-repeat;
   will-change: transform, opacity, filter;
+  position: relative;
+}
+
+/* Base empire styling with animated backgrounds */
+.slide--shinobi,
+.slide--pegasus,
+.slide--chimera,
+.slide--phoenix {
+  background: #000;
+}
+
+/* Empire name decorations on sides */
+.slide::before {
+  content: attr(data-empire);
+  position: absolute;
+  left: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 0.5rem;
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #ffffff;
+  opacity: 0.9;
+  z-index: 5;
+  pointer-events: none;
+  font-family: "Orbitron", monospace;
+}
+
+.slide::after {
+  content: attr(data-empire);
+  position: absolute;
+  right: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 0.5rem;
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #ffffff;
+  opacity: 0.9;
+  z-index: 5;
+  pointer-events: none;
+  font-family: "Orbitron", monospace;
+}
+
+/* Shinobi Empire - Red shadows and ninja aesthetics */
+.slide--shinobi {
+  background: #000000;
+}
+
+.slide--shinobi::before,
+.slide--shinobi::after {
+  text-shadow: 
+    0 0 10px rgb(var(--color-team-shinobi)),
+    0 0 20px rgb(var(--color-team-shinobi)),
+    0 0 30px rgb(var(--color-team-shinobi)),
+    0 0 40px rgb(var(--color-team-shinobi) / 0.7),
+    0 0 70px rgb(var(--color-team-shinobi) / 0.5);
+}
+
+/* Pegasus Empire - Golden wings and celestial theme */
+.slide--pegasus {
+  background: #000000;
+}
+
+.slide--pegasus::before,
+.slide--pegasus::after {
+  text-shadow: 
+    0 0 10px rgb(var(--color-team-pegasus)),
+    0 0 20px rgb(var(--color-team-pegasus)),
+    0 0 30px rgb(var(--color-team-pegasus)),
+    0 0 40px rgb(var(--color-team-pegasus) / 0.7),
+    0 0 70px rgb(var(--color-team-pegasus) / 0.5);
+}
+
+/* Chimera Empire - Deep blue mystical energy */
+.slide--chimera {
+  background: #000000;
+}
+
+.slide--chimera::before,
+.slide--chimera::after {
+  text-shadow: 
+    0 0 10px rgb(var(--color-team-chimera)),
+    0 0 20px rgb(var(--color-team-chimera)),
+    0 0 30px rgb(var(--color-team-chimera)),
+    0 0 40px rgb(var(--color-team-chimera) / 0.8),
+    0 0 70px rgb(var(--color-team-chimera) / 0.6);
+}
+
+/* Phoenix Empire - Fiery orange flames */
+.slide--phoenix {
+  background: #000000;
+}
+
+.slide--phoenix::before,
+.slide--phoenix::after {
+  text-shadow: 
+    0 0 10px rgb(var(--color-team-phoenix)),
+    0 0 20px rgb(var(--color-team-phoenix)),
+    0 0 30px rgb(var(--color-team-phoenix)),
+    0 0 40px rgb(var(--color-team-phoenix) / 0.7),
+    0 0 70px rgb(var(--color-team-phoenix) / 0.5);
+}
+
+/* Animations */
+@keyframes shinobi-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+@keyframes pegasus-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes pegasus-stars {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+
+@keyframes chimera-energy {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes phoenix-flicker {
+  0%, 100% { opacity: 1; }
+  25% { opacity: 0.9; }
+  50% { opacity: 1; }
+  75% { opacity: 0.95; }
+}
+
+@keyframes phoenix-rise {
+  0%, 100% { transform: translateY(0); opacity: 0.8; }
+  50% { transform: translateY(-10px); opacity: 1; }
 }
 
 .scroll-hint {
@@ -132,7 +277,7 @@ body {
 .slide-title-container {
   width: 100%;
   text-align: center;
-  height: 30px;
+  height: 50px;
   overflow: hidden;
   margin-bottom: 16px;
   position: relative;
@@ -146,6 +291,7 @@ body {
   opacity: 0.8;
   transition: transform 0.5s ease, opacity 0.5s ease;
   left: 0;
+  top: 0;
 }
 
 .slide-title.exit-up {
@@ -156,6 +302,16 @@ body {
 .slide-title.enter-up {
   transform: translateY(30px);
   opacity: 0;
+}
+
+#empire-section {
+  position: absolute;
+  width: 100%;
+  color: #fff;
+  font-size: 0.8rem;
+  opacity: 0.6;
+  top: 25px;
+  transition: color 0.5s ease;
 }
 
 /* Updated drag indicator styles */

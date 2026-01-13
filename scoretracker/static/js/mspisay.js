@@ -78,7 +78,7 @@ function updateEmpireSection(index) {
   const empireSection = document.getElementById("empire-section");
   if (!empireSection) return;
 
-  const empireName = empireNames[index] || "COSMIC SERIES";
+  const empireName = empireNames[index] || "";
   const empireKey = Object.keys(empireColorMap).find(key => 
     empireColorMap[key] && empireName.toLowerCase().includes(key.toLowerCase())
   );
