@@ -211,7 +211,7 @@ body {
 main {
   position: relative;
   width: 100%;
-  height: 100vh;
+  height: 100dvh;
   z-index: 10;
 }
 
@@ -246,22 +246,26 @@ main {
   }
 }
 
-.heading__text {
+.text-container {
+  position: absolute;
   top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 100;
+  width: 90vw;
+}
+
+.heading__text {
   font-family: "Black Ops One", system-ui;
   font-size: clamp(3rem, 8vw, 6rem);
   font-weight: 700;
-  left: 50%;
   letter-spacing: 0.1em;
   margin: 0;
-  text-align: center;
-  transform: translateX(-50%);
   white-space: nowrap;
-  position: absolute;
   transition: color 0.3s ease;
-  z-index: 100;
   will-change: color;
-  text-shadow: 0 0 20px currentColor, 0 0 30px currentColor, 0 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 0 30px currentColor, 0 0 50px currentColor, 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 @keyframes textGlow {
@@ -281,20 +285,17 @@ main {
 }
 
 .contestant-name-display {
-  position: absolute;
-  top: 170px;
-  left: 50%;
-  transform: translateX(-50%);
   font-family: "Black Ops One", system-ui;
   font-size: clamp(1.5rem, 4vw, 2.5rem);
   color: var(--empire-color);
   text-align: center;
-  z-index: 100;
   letter-spacing: 0.05em;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   transition: all 0.5s ease;
   will-change: color, text-shadow;
   white-space: nowrap;
+  margin: 10px 0 0 0;
+}
   animation: slideInScale 0.5s ease-out;
 }
 
@@ -389,9 +390,9 @@ main {
 }
 
 .circular-carousel {
-  --circular-size: 100vh;
+  --circular-size: 100dvh;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
   position: absolute;
   left: 50%;
   transform: translatex(-50%);
@@ -450,14 +451,18 @@ main {
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
+  .text-container {
+    top: 10dvh;
+    width: 95vw;
+  }
+  
   .heading__text {
-    top: 15vh;
     font-size: clamp(1.8rem, 9vw, 3rem);
   }
   
   .contestant-name-display {
-    top: calc(15vh + 70px);
     font-size: clamp(1rem, 5vw, 1.5rem);
+    margin-top: 8px;
   }
   
   .instruction {
@@ -466,23 +471,22 @@ main {
   }
   
   .circular-carousel {
-    --circular-size: 100vh;
+    --circular-size: 100dvh;
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 100vh;
-    height: 100vh;
+    width: 100dvh;
+    height: 100dvh;
   }
   
   .circular-carousel__list {
-    width: 100vh;
-    height: 100vh;
+    width: 100dvh;
+    height: 100dvh;
     position: absolute;
-    top: 0;
-    left: 0;
-    bottom: auto;
-    right: auto;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
   
   .circular-carousel__item img {
