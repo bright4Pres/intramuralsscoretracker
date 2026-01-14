@@ -5,7 +5,7 @@ const empireHeading = document.getElementById("empire-heading");
 const contestantNameDisplay = document.getElementById("contestant-name");
 const bgGradient = document.querySelector(".bg-gradient");
 
-let lastEmpire = null;
+let lastContestantId = null;
 
 // Throttle function for performance
 function throttle(func, delay) {
@@ -39,14 +39,15 @@ function getTopContestant() {
 // Function to update page theme based on active contestant
 function updateTheme() {
   const topItem = getTopContestant();
+  const contestantId = topItem.dataset.contestantId;
+  
+  // Only update if contestant changed
+  if (contestantId === lastContestantId) return;
+  lastContestantId = contestantId;
+  
   const empire = topItem.dataset.empire;
-  
-  // Only update if empire changed
-  if (empire === lastEmpire) return;
-  lastEmpire = empire;
-  
   const contestantName = topItem.dataset.contestantName;
-  const contestantData = contestantsData.find(c => c.empire === empire);
+  const contestantData = contestantsData.find(c => c.id == contestantId);
   
   if (contestantData) {
     const empireColor = contestantData.empire_color;
@@ -59,9 +60,13 @@ function updateTheme() {
     empireHeading.textContent = empireName;
     empireHeading.style.color = empireColor;
     
-    // Update contestant name display
-    contestantNameDisplay.textContent = contestantName;
-    contestantNameDisplay.style.color = empireColor;
+    // Update contestant name display with animation re-trigger
+    contestantNameDisplay.style.animation = 'none';
+    setTimeout(() => {
+      contestantNameDisplay.textContent = contestantName;
+      contestantNameDisplay.style.color = empireColor;
+      contestantNameDisplay.style.animation = 'slideInScale 0.5s ease-out';
+    }, 10);
     
     // Update background gradient with empire color
     bgGradient.style.background = `radial-gradient(circle at 50% 0%, ${empireColor}15, #000000 70%)`;

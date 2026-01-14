@@ -16,11 +16,7 @@
   <div class="bg-grid"></div>
   <div class="bg-particles"></div>
   <div class="bg-hexagons"></div>
-  <div class="corner-accent top-left"></div>
-  <div class="corner-accent top-right"></div>
-  <div class="corner-accent bottom-left"></div>
-  <div class="corner-accent bottom-right"></div>
-  
+    
   <main>
   <h1 class="heading__text" id="empire-heading">
     Empire
@@ -28,7 +24,6 @@
   <div class="contestant-name-display" id="contestant-name">
     Contestant Name
   </div>
-  <div class="instruction">DRAG TO ROTATE</div>
   <div class="circular-carousel">
     <div class="circular-carousel__list">
       <svg viewBox="0 0 400 400">
@@ -46,6 +41,14 @@
       {% endfor %}
     </div>
   </div>
+  
+  <!-- Navigation Buttons -->
+  <div class="nav-buttons">
+    <a href="/" class="nav-btn">Home</a>
+    <a href="/leaderboard/" class="nav-btn">Leaderboards</a>
+  </div>
+  
+  <div class="instruction">DRAG TO ROTATE</div>
 </main>
 <script>
   const contestantsData = {{ contestant_names_json|safe }};

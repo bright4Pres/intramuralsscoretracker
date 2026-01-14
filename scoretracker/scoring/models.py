@@ -170,8 +170,6 @@ class Contestant(models.Model):
     empire = models.CharField(max_length=20, choices=Team.TEAM_CHOICES)
     photo = CloudinaryField('image', blank=True, null=True)
     advocacy_video = CloudinaryField('video', resource_type='video', blank=True, null=True)
-    overlay_up = CloudinaryField('image', blank=True, null=True, help_text='Transparent overlay image for top')
-    overlay_down = CloudinaryField('image', blank=True, null=True, help_text='Transparent overlay image for bottom')
     order = models.IntegerField(default=0)  # For ordering in the carousel
     is_active = models.BooleanField(default=True)
     
