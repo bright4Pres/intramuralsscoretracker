@@ -18,13 +18,14 @@ html {
 }
 
 body {
-  background-color: #000000;
+  background: linear-gradient(135deg, #000000 0%, #000000 100%);
   color: var(--color-white);
   font-family: "Open Sans", sans-serif;
   font-optical-sizing: auto;
   position: relative;
   min-height: 100vh;
   overflow: hidden;
+  transition: background 1.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Background Layers */
@@ -260,11 +261,7 @@ main {
   transition: color 0.3s ease;
   z-index: 100;
   will-change: color;
-  text-shadow: 
-    0 0 20px currentColor,
-    0 0 40px currentColor,
-    0 4px 8px rgba(0, 0, 0, 0.8);
-  animation: textGlow 2s ease-in-out infinite;
+  text-shadow: 0 0 20px currentColor, 0 0 30px currentColor, 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 @keyframes textGlow {
@@ -294,11 +291,9 @@ main {
   text-align: center;
   z-index: 100;
   letter-spacing: 0.05em;
-  text-shadow: 
-    0 0 15px currentColor,
-    0 2px 6px rgba(0, 0, 0, 0.9);
-  transition: color 0.3s ease;
-  will-change: color;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.5s ease;
+  will-change: color, text-shadow;
   white-space: nowrap;
   animation: slideInScale 0.5s ease-out;
 }
@@ -324,7 +319,7 @@ main {
   font-size: clamp(0.8rem, 2vw, 1.2rem);
   letter-spacing: 0.3em;
   z-index: 100;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   animation: instructionBlink 2s ease-in-out infinite;
 }
 
@@ -451,4 +446,94 @@ main {
 
 .circular-carousel__item img:hover {
   transform: scale(1.05);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .heading__text {
+    top: 15vh;
+    font-size: clamp(1.8rem, 9vw, 3rem);
+  }
+  
+  .contestant-name-display {
+    top: calc(15vh + 70px);
+    font-size: clamp(1rem, 5vw, 1.5rem);
+  }
+  
+  .instruction {
+    bottom: 20px;
+    font-size: clamp(0.5rem, 2.5vw, 0.8rem);
+  }
+  
+  .circular-carousel {
+    --circular-size: 100vh;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100vh;
+    height: 100vh;
+  }
+  
+  .circular-carousel__list {
+    width: 100vh;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: auto;
+    right: auto;
+  }
+  
+  .circular-carousel__item img {
+    width: 160px;
+    height: 200px;
+  }
+  
+  .nav-buttons {
+    bottom: 10px;
+    right: 10px;
+    left: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .nav-btn {
+    padding: 8px 16px;
+    font-size: 0.7rem;
+  }
+  
+  .corner-accent {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .corner-accent.top-left,
+  .corner-accent.top-right {
+    top: 10px;
+  }
+  
+  .corner-accent.bottom-left,
+  .corner-accent.bottom-right {
+    bottom: 10px;
+  }
+  
+  .corner-accent.top-left,
+  .corner-accent.bottom-left {
+    left: 10px;
+  }
+  
+  .corner-accent.top-right,
+  .corner-accent.bottom-right {
+    right: 10px;
+  }
+  
+  .corner-accent::before {
+    width: 30px;
+  }
+  
+  .corner-accent::after {
+    height: 30px;
+  }
 }

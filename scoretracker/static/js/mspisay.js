@@ -53,23 +53,44 @@ function updateTheme() {
     const empireColor = contestantData.empire_color;
     const empireName = contestantData.empire_display.toUpperCase();
     
+    // Define background and text colors for each empire
+    const empireThemes = {
+      'pegasus': { bg: '#f2c326', text: '#000000' }, // yellow bg, black text
+      'phoenix': { bg: '#f97316', text: '#ffffff' }, // orange bg, white text
+      'shinobi': { bg: '#b82222', text: '#ffffff' }, // red bg, white text
+      'chimera': { bg: '#242695', text: '#ffffff' }  // purple/blue bg, white text
+    };
+    
+    const theme = empireThemes[empire] || { bg: empireColor, text: '#ffffff' };
+    
     // Update CSS variable
     document.documentElement.style.setProperty('--empire-color', empireColor);
     
+    // Update body background with liquid spread effect
+    document.body.style.background = `radial-gradient(circle at 50% 50%, ${theme.bg} 0%, ${theme.bg}ee 40%, ${theme.bg}cc 70%, ${theme.bg}99 100%)`;
+    
     // Update heading text and style
     empireHeading.textContent = empireName;
-    empireHeading.style.color = empireColor;
+    empireHeading.style.color = theme.text;
+    empireHeading.style.textShadow = `0 2px 4px rgba(0, 0, 0, 0.2)`;
     
     // Update contestant name display with animation re-trigger
     contestantNameDisplay.style.animation = 'none';
     setTimeout(() => {
       contestantNameDisplay.textContent = contestantName;
-      contestantNameDisplay.style.color = empireColor;
+      contestantNameDisplay.style.color = theme.text;
+      contestantNameDisplay.style.textShadow = `0 2px 4px rgba(0, 0, 0, 0.2)`;
       contestantNameDisplay.style.animation = 'slideInScale 0.5s ease-out';
     }, 10);
     
-    // Update background gradient with empire color
-    bgGradient.style.background = `radial-gradient(circle at 50% 0%, ${empireColor}15, #000000 70%)`;
+    // Update instruction text
+    const instruction = document.querySelector('.instruction');
+    if (instruction) {
+      instruction.style.color = `${theme.text}99`;
+    }
+    
+    // Update background gradient layer
+    bgGradient.style.background = `radial-gradient(circle at 50% 0%, ${theme.bg}20, transparent 70%)`;
     
     // Dim contestants not from the same empire
     carouselItems.forEach(item => {
