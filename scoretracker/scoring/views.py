@@ -73,6 +73,9 @@ def get_scores(request):
 @require_http_methods(["POST"])
 def add_game_result(request):
     """API endpoint to add a game result with automatic point calculation."""
+    if not request.session.get('is_admin'):
+        return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
+    
     team_name = request.POST.get('team')
     game_id = request.POST.get('game_id')
     placement = request.POST.get('placement')
@@ -134,6 +137,9 @@ def add_game_result(request):
 @require_http_methods(["POST"])
 def add_points(request):
     """API endpoint to add points to a team."""
+    if not request.session.get('is_admin'):
+        return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
+    
     team_name = request.POST.get('team')
     points = request.POST.get('points')
     opponent = request.POST.get('opponent', '').strip()
@@ -200,6 +206,9 @@ def add_points(request):
 @require_http_methods(["POST"])
 def reset_scores(request):
     """API endpoint to reset all team scores to 0 and clear all logs."""
+    if not request.session.get('is_admin'):
+        return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
+    
     Team.objects.all().update(points=0)
     ScoreLog.objects.all().delete()
     return JsonResponse({'success': True, 'message': 'All scores and logs have been reset'})
@@ -267,6 +276,9 @@ def get_logs(request):
 @require_http_methods(["POST"])
 def set_game_result(request):
     """API endpoint to set game results/placements."""
+    if not request.session.get('is_admin'):
+        return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
+    
     game_id = request.POST.get('game_id')
     placements = request.POST.get('placements')  # JSON string: {"team_name": placement}
     
@@ -317,6 +329,9 @@ def get_game_results(request):
 @require_http_methods(["POST"])
 def add_special_award(request):
     """API endpoint to add a special award."""
+    if not request.session.get('is_admin'):
+        return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
+    
     game_id = request.POST.get('game_id')
     award_name = request.POST.get('award_name')
     team = request.POST.get('team')
@@ -369,6 +384,9 @@ def get_special_awards(request, game_id):
 @require_http_methods(["POST"])
 def delete_special_award(request, award_id):
     """API endpoint to clear a special award (set team to None instead of deleting)."""
+    if not request.session.get('is_admin'):
+        return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
+    
     try:
         award = SpecialAward.objects.get(id=award_id)
         
